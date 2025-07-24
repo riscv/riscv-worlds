@@ -95,9 +95,9 @@ not change between resets.
 
 NOTE: Different harts in a system may have different WIDs in M-mode.
 
-=== WorldGuard CSRs
+=== RISC-V Worlds CSRs
 
-The WorldGuard Smwid, Smwdeleg, and Sswid extensions allow a hart to assign
+The RISC-V Worlds Smwid, Smwdeleg, and Sswid extensions allow a hart to assign
 WIDs to its privilege modes.  The new CSRs are listed in the Table below.
 
 [cols="1,1,^1,^1,5"]
@@ -145,7 +145,7 @@ which worlds are available to be assigned to lower modes, though in
 normal use, platform software will have predetermined allocations for
 the worlds on a platform.
 
-NOTE: We constrain WARL behavior to reduce compatibilty-testing effort.
+NOTE: We constrain WARL behavior to reduce compatibility-testing effort.
 Also, having a defined value slightly reduces time to dynamically
 search for valid WIDs.
 
