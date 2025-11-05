@@ -107,16 +107,16 @@ WIDs to its privilege modes.  The new CSRs are listed in the Table below.
 .World-ID CSRs
 |===
 |Size in bits|Register|Access|Proposed CSR Address|Description
-| `XLEN` | `mlwid` |RW for M | `0x390` | WID used for lower privilege modes.
+| `XLEN` | `mlwid` | WARL for M | `0x390` | WID used for lower privilege modes.
 `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
-| `XLEN` | `mwiddeleg` (aka `mwiddeleg0`) | RW for M | `0x748` | Set of WID
+| `XLEN` | `mwiddeleg` (aka `mwiddeleg0`) | WARL for M | `0x748` | Set of WID
 values delegated to [H]S-mode, represented as a bit vector. `NWorlds` LSBs
 are used, others are zero.
-| `XLEN` | `slwid` | RW for [H]S | `0x190` | WID value used in lower modes
+| `XLEN` | `slwid` | WARL for [H]S | `0x190` | WID value used in lower modes
 (i.e., U, VS, or VU). `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
 |===
 
-These extensions supports NWorlds &le; `XLEN`.
+These extensions support NWorlds &le; `XLEN`.
 
 The RISC-V Worlds Smwdelegh extension adds support for up to 128 Worlds.
 When this extension is present, NWorlds &le; 128.
@@ -126,11 +126,11 @@ The additional CSRs are listed below.
 .Smwdelegh additional CSRs
 |===
 |Size in bits|Register|Access|Proposed CSR Address|Description
-| `XLEN` | `mwiddeleg1` | RW for M | | Set of WID values delegated to
+| `XLEN` | `mwiddeleg1` | WARL for M | | Set of WID values delegated to
 [H]S-mode (WID 32 to 63), represented as a bit vector, RV32 only.
-| `XLEN` | `mwiddeleg2` | RW for M | | Set of WID values delegated to
+| `XLEN` | `mwiddeleg2` | WARL for M | | Set of WID values delegated to
 [H]S-mode (WID &ge; 64), represented as a bit vector.
-| `XLEN` | `mwiddeleg3` | RW for M | | Set of WID values delegated to
+| `XLEN` | `mwiddeleg3` | WARL for M | | Set of WID values delegated to
 [H]S-mode (WID 96 to 127), represented as a bit vector, RV32 only.
 |===
 
@@ -165,7 +165,7 @@ address-translation caches on any `mlwid` write.
 with WID _i_ represented by bit _i_ of the register. It defines the NWorlds
 WID values authorized for this hart, except for M-mode.
 
-The `mlwid` CSR is WARL, and if an illegal WID is written, the
+The `mlwid` CSR is WARL, and if an unauthorized WID is written, the
 lowest-numbered legal WID (defined by the `mwidlist`) is returned (ie. the
 WID _i_ corresponding to the least significant bit _i_ in the `mwidlist` that
 is set to 1`).
@@ -216,7 +216,7 @@ The Smwdelegh extension adds the `mwiddeleg1`, `mwiddeleg2`, and
 `mwiddeleg3` M-mode read-write CSRs. 
 
 NOTE: Different harts on a platform can have different sets of
-delegatable worlds.
+delegable worlds.
 
 When `mwiddeleg` CSR is written, the data is ANDed with `mwidlist` to
 determine the final legal value. If the result is zero, the Sswid extension
@@ -227,7 +227,7 @@ configured value to verify it is indeed legal.
 The Sswid extension adds the [H]S-mode read-write `slwid` CSR, which
 sets the WID used for modes lower than [H]S-mode.  The `slwid` is
 WARL, with `mwiddeleg` specifying the legal values for `slwid`.  If an
-illegal WID is written to `slwid`, the lowest-numbered legal WID is
+unauthorized WID is written to `slwid`, the lowest-numbered legal WID is
 returned.  When Sswid is present, `mlwid` now specifies the WID for
 [H]S-mode only, and `slwid` specifies the WID for lower-privilege
 modes (U, VS, VU). Like any other WARL register, S-mode software is
