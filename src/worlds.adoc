@@ -47,12 +47,8 @@ be checked.  The method of propagating and checking the WID on busses
 is platform-specific, with different bus fabrics supporting WIDs in
 bus-specific ways. Similarly, any cache on the path that may need to 
 allocate data into cache lines must consider the WID of the original
-transaction. The method of propagating the WID through caches is
-platform-specific (addition of the WID to the tag is one possibility).
-If a subsequent request matches on the physical address, the WID of the
-original transaction must be considered to determine whether it is
-a cache hit or a cache miss (with eviction). The cache policy is again
-platform-specific.
+transaction. The method of propagating and using the WID through caches is
+platform-specific, as well as the cache policy.
 
 NOTE: Theoretically all permissions checks on transactions could be
 performed at the source agent to prevent any illegal transactions from
@@ -96,8 +92,9 @@ from memory reads, and so worlds permissions checkers located on the other
 side of the bus fabric are unable to distinguish these two cases.
 
 *World-ID extensions do not allow a privilege mode to change its own WID.*
-The WID of M-mode on a hart (`mwid`) is set by the external environment and
-does not change between resets.
+The WID of M-mode on a hart (`mwid`) is set by the external environment.
+
+NOTE: It is platform-specific whether `mwid` can change or not between resets.
 
 NOTE: Different harts in a system may have different WIDs in M-mode.
 
@@ -146,8 +143,8 @@ world.  How the hart is assigned to a world, or whether and how a hart
 is allowed to determine any information about worlds configuration is
 platform-specific.
 
-NOTE: The `mwid` can be set via a pinstrap, a fuse or a secure SoC register.
-The implementation is platform-specific.
+NOTE: The `mwid` can be set via a pinstrap, a fuse or a RoT-controlled
+register. The implementation is platform-specific.
 
 === Smwid extension
 
@@ -183,8 +180,8 @@ the worlds on a platform.
 
 NOTE: We constrain WARL behavior to reduce compatibility-testing effort.
 Also, having a defined value slightly reduces time to dynamically
-search for valid WIDs. Like any other WARL register, software is expected
-to read back the configured value to verify it is indeed legal.
+search for valid WIDs. Like any other WARL register, M-mode software is
+expected to read back the configured value to verify it is indeed legal.
 
 M-mode may have a different WID than any assignable by `mlwid` to
 lower-privilege modes.
@@ -224,6 +221,8 @@ delegatable worlds.
 When `mwiddeleg` CSR is written, the data is ANDed with `mwidlist` to
 determine the final legal value. If the result is zero, the Sswid extension
 is disabled. If the result is non-zero, the Sswid extension is enabled.
+Like any other WARL register, M-mode software is expected to read back the
+configured value to verify it is indeed legal.
 
 The Sswid extension adds the [H]S-mode read-write `slwid` CSR, which
 sets the WID used for modes lower than [H]S-mode.  The `slwid` is
@@ -231,7 +230,8 @@ WARL, with `mwiddeleg` specifying the legal values for `slwid`.  If an
 illegal WID is written to `slwid`, the lowest-numbered legal WID is
 returned.  When Sswid is present, `mlwid` now specifies the WID for
 [H]S-mode only, and `slwid` specifies the WID for lower-privilege
-modes (U, VS, VU).
+modes (U, VS, VU). Like any other WARL register, S-mode software is
+expected to read back the configured value to verify it is indeed legal.
 
 If the value in `mwiddeleg` is non-zero, the Sswid extension is
 enabled.  When `mwiddeleg` is set to a non-zero value, `slwid` is

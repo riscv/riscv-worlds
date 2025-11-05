@@ -767,8 +767,20 @@ Resumable NMI status.
 4+^|Machine Worlds Registers
 |`0x748`
 |MRW
-|`mwiddeleg`
+|`mwiddeleg` aka `mwiddeleg0`
 | Machine WID values delegated to [H]S mode Register.
+|
+|MRW
+|`mwiddeleg1`
+| Machine WID values delegated to [H]S mode Register, RV32 only.
+|`0x748`
+|MRW
+|`mwiddeleg2`
+| Machine WID values delegated to [H]S mode Register.
+|`0x748`
+|MRW
+|`mwiddeleg3`
+| Machine WID values delegated to [H]S mode Register, RV32 only.
 
 4+^|Machine Counter/Timers
 
