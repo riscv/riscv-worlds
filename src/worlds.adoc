@@ -1,4 +1,3 @@
-:le: &#8804;
 
 == RISC-V Worlds Overview
  
@@ -46,7 +45,14 @@ transaction carries the WID through the interconnect and all elements
 on the path toward the targeted resource until access permissions can
 be checked.  The method of propagating and checking the WID on busses
 is platform-specific, with different bus fabrics supporting WIDs in
-bus-specific ways.
+bus-specific ways. Similarly, any cache on the path that may need to 
+allocate data into cache lines must consider the WID of the original
+transaction. The method of propagating the WID through caches is
+platform-specific (addition of the WID to the tag is one possibility).
+If a subsequent request matches on the physical address, the WID of the
+original transaction must be considered to determine whether it is
+a cache hit or a cache miss (with eviction). The cache policy is again
+platform-specific.
 
 NOTE: Theoretically all permissions checks on transactions could be
 performed at the source agent to prevent any illegal transactions from
@@ -76,9 +82,9 @@ There are three levels of Worlds support on RISC-V harts.  The first level
 does not require an ISA extension and fixes the WID for all privilege
 modes on a hart.  The second level is the *Smwid* extension, which
 enables M-mode to control the WID of lower-privilege modes.  The third
-level is the *Smwdeleg* extension, which further enables M-mode to
-delegate to [H]S-mode the ability to assign the WID of lower-privilege
-modes, thereby adding the *Sswid* extension to [H]S-mode.
+level is the *Smwdeleg* and *Smwdelegh* extensions, which further enables
+M-mode to delegate to [H]S-mode the ability to assign the WID of lower-
+privilege modes, thereby adding the *Sswid* extension to [H]S-mode.
 
 All accesses, including implicit memory references such as instruction
 fetches and page-table walks, must be tagged with the appropriate WID.
@@ -89,9 +95,9 @@ NOTE: Bus fabrics typically do not differentiate instruction fetches
 from memory reads, and so worlds permissions checkers located on the other
 side of the bus fabric are unable to distinguish these two cases.
 
-World-ID extensions do not allow a privilege mode to change its own WID.
-The WID of M-mode on a hart is set by the external environment and does
-not change between resets.
+*World-ID extensions do not allow a privilege mode to change its own WID.*
+The WID of M-mode on a hart (`mwid`) is set by the external environment and
+does not change between resets.
 
 NOTE: Different harts in a system may have different WIDs in M-mode.
 
@@ -104,13 +110,32 @@ WIDs to its privilege modes.  The new CSRs are listed in the Table below.
 .World-ID CSRs
 |===
 |Size in bits|Register|Access|Proposed CSR Address|Description
-
-|`XLEN`|`mlwid`|RW for M|`0x390`|WID used for lower privilege modes. `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
-|`XLEN`|`mwiddeleg`|RW for M|`0x748`| Set of WID values delegated to [H]S-mode, represented as a bit vector. `NWorlds` LSBs are used, others are zero.
-|`XLEN`|`slwid`|RW for [H]S|`0x190`|WID value used in lower modes (i.e., U, VS, or VU). `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
+| `XLEN` | `mlwid` |RW for M | `0x390` | WID used for lower privilege modes.
+`Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
+| `XLEN` | `mwiddeleg` (aka `mwiddeleg0`) | RW for M | `0x748` | Set of WID
+values delegated to [H]S-mode, represented as a bit vector. `NWorlds` LSBs
+are used, others are zero.
+| `XLEN` | `slwid` | RW for [H]S | `0x190` | WID value used in lower modes
+(i.e., U, VS, or VU). `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
 |===
 
-These extensions supports NWorlds {le} `XLEN`.
+These extensions supports NWorlds &le; `XLEN`.
+
+The RISC-V Worlds Smwdelegh extension adds support for up to 128 Worlds.
+When this extension is present, NWorlds &le; 128.
+The additional CSRs are listed below.
+
+[cols="1,1,^1,^1,5"]
+.Smwdelegh additional CSRs
+|===
+|Size in bits|Register|Access|Proposed CSR Address|Description
+| `XLEN` | `mwiddeleg1` | RW for M | | Set of WID values delegated to
+[H]S-mode (WID 32 to 63), represented as a bit vector, RV32 only.
+| `XLEN` | `mwiddeleg2` | RW for M | | Set of WID values delegated to
+[H]S-mode (WID &ge; 64), represented as a bit vector.
+| `XLEN` | `mwiddeleg3` | RW for M | | Set of WID values delegated to
+[H]S-mode (WID 96 to 127), represented as a bit vector, RV32 only.
+|===
 
 === One world per hart
 
@@ -120,6 +145,9 @@ hart, regardless of privilege mode, are tagged with the WID of that
 world.  How the hart is assigned to a world, or whether and how a hart
 is allowed to determine any information about worlds configuration is
 platform-specific.
+
+NOTE: The `mwid` can be set via a pinstrap, a fuse or a secure SoC register.
+The implementation is platform-specific.
 
 === Smwid extension
 
@@ -136,9 +164,17 @@ address-translation caches must ensure that translations are cached
 separately for each WID.  A simple implementation can flush
 address-translation caches on any `mlwid` write.
 
+`mwidlist` (width of NWorlds) represents a set of WIDs as a bit vector,
+with WID _i_ represented by bit _i_ of the register. It defines the NWorlds
+WID values authorized for this hart, except for M-mode.
+
 The `mlwid` CSR is WARL, and if an illegal WID is written, the
-lowest-numbered legal WID is returned.  It is platform-specific which
-worlds can be used by lower-privilege modes on this hart.
+lowest-numbered legal WID (defined by the `mwidlist`) is returned (ie. the
+WID _i_ corresponding to the least significant bit _i_ in the `mwidlist` that
+is set to 1`).
+
+It is platform-specific which worlds can be used by lower-privilege modes
+on this hart.
 
 NOTE: M-mode software can use the WARL property of `mlwid` to discover
 which worlds are available to be assigned to lower modes, though in
@@ -147,33 +183,47 @@ the worlds on a platform.
 
 NOTE: We constrain WARL behavior to reduce compatibility-testing effort.
 Also, having a defined value slightly reduces time to dynamically
-search for valid WIDs.
+search for valid WIDs. Like any other WARL register, software is expected
+to read back the configured value to verify it is indeed legal.
 
 M-mode may have a different WID than any assignable by `mlwid` to
 lower-privilege modes.
 
 NOTE: The platform is not required to allow lower-privilege modes to
-be in the same world as M-mode.
+be in the same world as M-mode. (`mwid` value may not be included in the
+`mwidlist`)
 
 At reset, `mlwid` must hold a WID that can be allocated to lower
 modes.
 
-=== Smwdeleg / Sswid extensions
+=== Smwdeleg(h) / Sswid extensions
 
 The Smwdeleg extension requires the Smwid extension and allows M-mode to
 delegate to [H]S-mode the ability to allocate WIDs to privilege modes
 lower than [H]S.  The Smwdeleg extension optionally enables the Sswid
 extension for [H]S-mode.
 
+The Smwdelegh extension requires the Smwdeleg extension and extends the
+set of worlds that can be delegated to [H]S-mode to include WIDs up to
+127.
+
 The Smwdeleg extension adds the `mwiddeleg` M-mode read-write CSR.  The
 `mwiddeleg` register represents a set of WIDs as a bit vector with
 WID _i_ represented by bit _i_ of the register.  The `mwiddeleg` CSR
 is a WARL register where each bit that can be set indicates a WID that
 is delegated to [H]S-mode.  The set of worlds that can be delegated to
-[H]S-mode on a hart is platform-specific.
+[H]S-mode on a hart is platform-specific. Legal values are defined by
+`mwidlist`.
+
+The Smwdelegh extension adds the `mwiddeleg1`, `mwiddeleg2`, and
+`mwiddeleg3` M-mode read-write CSRs. 
 
 NOTE: Different harts on a platform can have different sets of
 delegatable worlds.
+
+When `mwiddeleg` CSR is written, the data is ANDed with `mwidlist` to
+determine the final legal value. If the result is zero, the Sswid extension
+is disabled. If the result is non-zero, the Sswid extension is enabled.
 
 The Sswid extension adds the [H]S-mode read-write `slwid` CSR, which
 sets the WID used for modes lower than [H]S-mode.  The `slwid` is
