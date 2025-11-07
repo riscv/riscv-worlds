@@ -27,7 +27,10 @@ effects on writes.
 The standard RISC-V ISA sets aside a 12-bit encoding space (csr[11:0])
 for up to 4,096 CSRs. By convention, the upper 4 bits of the CSR address
 (csr[11:8]) are used to encode the read and write accessibility of the
-CSRs according to privilege level as shown in <<csrrwpriv>>. The top two bits (csr[11:10]) indicate whether the register is read/write (`00`,`01`, or `10`) or read-only (`11`). The next two bits (csr[9:8]) encode the lowest privilege level that can access the CSR.
+CSRs according to privilege level as shown in <<csrrwpriv>>. The top two
+bits (csr[11:10]) indicate whether the register is read/write (`00`,`01`
+, or `10`) or read-only (`11`). The next two bits (csr[9:8]) encode the
+lowest privilege level that can access the CSR.
 
 [NOTE]
 ====
@@ -408,6 +411,11 @@ Upper 32 bits of `stimecmp`, RV32 only.
  Supervisor Control Transfer Records Status Register. +
  Supervisor Control Transfer Records Depth Register.
 
+4+^|Supervisor Worlds Registers
+|`0x190`
+|SRW 
+|`slwid`
+| Supervisor WID value for lower privilege modes (i.e., U, VS or VU) Register. 
 |===
 
 <<<
@@ -874,6 +882,13 @@ Physical memory protection address register.
  Upper 32 bits of Machine State Enable 1 Register, RV32 only. +
  Upper 32 bits of Machine State Enable 2 Register, RV32 only. +
  Upper 32 bits of Machine State Enable 3 Register, RV32 only.
+
+4+^|Machine Worlds Registers
+|`0x390`
+|MRW
+|`mlwid`
+|Machine WID value for lower privilege modes Register.
+
 |===
 
 <<<
@@ -901,6 +916,24 @@ MRW
 Resumable NMI program counter. +
 Resumable NMI cause. +
 Resumable NMI status.
+
+4+^|Machine Worlds Registers
+|`0x748`
+|MRW
+|`mwiddeleg` aka `mwiddeleg0`
+| Machine WID values delegated to [H]S mode Register.
+|
+|MRW
+|`mwiddeleg1`
+| Machine WID values delegated to [H]S mode Register, RV32 only.
+|`0x748`
+|MRW
+|`mwiddeleg2`
+| Machine WID values delegated to [H]S mode Register.
+|`0x748`
+|MRW
+|`mwiddeleg3`
+| Machine WID values delegated to [H]S mode Register, RV32 only.
 
 4+^|Machine Counter/Timers
 
