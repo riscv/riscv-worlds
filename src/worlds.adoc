@@ -1,7 +1,7 @@
 [[worlds]]
 
 == RISC-V Worlds Overview
- 
+
 The _RISC-V Worlds_ provides isolation in a hardware platform by
 constraining access to system physical addresses.  It provides
 _Worlds_ , which are execution contexts that include agents (such as
@@ -38,7 +38,7 @@ the current specification.
 When an agent context initiates a transaction to a physical address,
 hardware marks the transaction with the WID of the agent context.  The
 transaction is only allowed to complete successfully if the targeted
-resource has the appropriate access permissions (read or write) 
+resource has the appropriate access permissions (read or write)
 on that address for the WID on the transaction.  The permission checks
 might be performed at the agent, at the resource, or anywhere along the
 path the transaction takes through the platform’s bus hierarchy.  The bus
@@ -46,7 +46,7 @@ transaction carries the WID through the interconnect and all elements
 on the path toward the targeted resource until access permissions can
 be checked.  The method of propagating and checking the WID on busses
 is platform-specific, with different bus fabrics supporting WIDs in
-bus-specific ways. Similarly, any cache on the path that may need to 
+bus-specific ways. Similarly, any cache on the path that may need to
 allocate data into cache lines must consider the WID of the original
 transaction. The method of propagating and using the WID through caches is
 platform-specific, as well as the cache policy.
@@ -117,10 +117,10 @@ are used, others are zero.
 (i.e., U, VS, or VU). `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
 |===
 
-These extensions support NWorlds &le; `XLEN`.
+These extensions support NWorlds {le} `XLEN`.
 
 The RISC-V Worlds Smwdelegh extension adds support for up to 128 Worlds.
-When this extension is present, NWorlds &le; 128.
+When this extension is present, NWorlds {le} 128.
 The additional CSRs are listed below.
 
 [cols="1,1,^1,^1,5"]
@@ -130,7 +130,7 @@ The additional CSRs are listed below.
 | `XLEN` | `mwiddeleg1` | WARL for M | | Set of WID values delegated to
 [H]S-mode (WID 32 to 63), represented as a bit vector, RV32 only.
 | `XLEN` | `mwiddeleg2` | WARL for M | | Set of WID values delegated to
-[H]S-mode (WID &ge; 64), represented as a bit vector.
+[H]S-mode (WID {ge} 64), represented as a bit vector.
 | `XLEN` | `mwiddeleg3` | WARL for M | | Set of WID values delegated to
 [H]S-mode (WID 96 to 127), represented as a bit vector, RV32 only.
 |===
@@ -214,7 +214,7 @@ is delegated to [H]S-mode.  The set of worlds that can be delegated to
 `mwidlist`.
 
 The Smwdelegh extension adds the `mwiddeleg1`, `mwiddeleg2`, and
-`mwiddeleg3` M-mode read-write CSRs. 
+`mwiddeleg3` M-mode read-write CSRs.
 
 NOTE: Different harts on a platform can have different sets of
 delegable worlds.
@@ -240,7 +240,7 @@ initialized to the lowest-numbered world present in `mwiddeleg`.
 
 If the value in `mwiddeleg` is zero, then the Sswid extension is
 disabled and accesses to `slwid` raise an illegal instruction
-exception. 
+exception.
 
 NOTE: If the system supports demand-paged virtual memory, then any
 address-translation caches must ensure that translations are cached

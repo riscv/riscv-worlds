@@ -413,9 +413,9 @@ Upper 32 bits of `stimecmp`, RV32 only.
 
 4+^|Supervisor Worlds Registers
 |`0x190`
-|SRW 
+|SRW
 |`slwid`
-| Supervisor WID value for lower privilege modes (i.e., U, VS or VU) Register. 
+| Supervisor WID value for lower privilege modes (i.e., U, VS or VU) Register.
 |===
 
 <<<
