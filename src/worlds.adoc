@@ -79,7 +79,7 @@ There are three levels of Worlds support on RISC-V harts.  The first level
 does not require an ISA extension and fixes the WID for all privilege
 modes on a hart.  The second level is the *Smwid* extension, which
 enables M-mode to control the WID of lower-privilege modes.  The third
-level is the *Smwdeleg* and *Smwdelegh* extensions, which further enables
+level is the *Smwdeleg* and *Smwdelegh* extensions, which further enable
 M-mode to delegate to [H]S-mode the ability to assign the WID of lower-
 privilege modes, thereby adding the *Sswid* extension to [H]S-mode.
 
@@ -144,8 +144,12 @@ world.  How the hart is assigned to a world, or whether and how a hart
 is allowed to determine any information about worlds configuration is
 platform-specific.
 
+.One world per hart
+image::images/one_world.svg[width=200]
+
 NOTE: The `mwid` can be set via a pinstrap, a fuse or a RoT-controlled
 register. The implementation is platform-specific.
+
 
 === Smwid extension
 
@@ -162,37 +166,34 @@ address-translation caches must ensure that translations are cached
 separately for each WID.  A simple implementation can flush
 address-translation caches on any `mlwid` write.
 
-`mwidlist` (width of NWorlds) represents a set of WIDs as a bit vector,
-with WID _i_ represented by bit _i_ of the register. It defines the NWorlds
-WID values authorized for this hart, except for M-mode.
-
-The `mlwid` CSR is WARL, and if an unauthorized WID is written, the
-lowest-numbered legal WID (defined by the `mwidlist`) is returned (ie. the
-WID _i_ corresponding to the least significant bit _i_ in the `mwidlist` that
-is set to 1`).
+The `mlwid` field is WARL that can contain Ceil(Log~2~NWorlds)-1:0 writable
+bits.
 
 It is platform-specific which worlds can be used by lower-privilege modes
 on this hart.
 
-NOTE: M-mode software can use the WARL property of `mlwid` to discover
-which worlds are available to be assigned to lower modes, though in
-normal use, platform software will have predetermined allocations for
-the worlds on a platform.
+NOTE: M-mode software can not discover which worlds are available to be assigned
+to lower modes nor which resources are accessible in each world.  The platform
+software will have predetermined allocations for the worlds on a platform and 
+all required information needed by M-mode software must be provided out-of-band.
 
-NOTE: We constrain WARL behavior to reduce compatibility-testing effort.
-Also, having a defined value slightly reduces time to dynamically
-search for valid WIDs. Like any other WARL register, M-mode software is
-expected to read back the configured value to verify it is indeed legal.
+A list of WID values authorized for this hart to be used by lower-privilege
+modes can be provided. `mwidlist` (width of NWorlds) represents a set
+of WIDs as a bit vector, with WID _i_ represented by bit _i_ of the register.
+If an unauthorized WID (per the `mwidlist`) is written to `mlwid`, when the
+lower-privilege mode attempts to fetch its first instruction in an illegal world,
+the hart will take a precise exception indicating the Software Check cause.
+
+.Smwid extension: Support for M-mode to control the lower privilege modes world
+image::images/Smwid.svg[width=400]
 
 M-mode may have a different WID than any assignable by `mlwid` to
 lower-privilege modes.
 
 NOTE: The platform is not required to allow lower-privilege modes to
 be in the same world as M-mode. (`mwid` value may not be included in the
-`mwidlist`)
-
-At reset, `mlwid` must hold a WID that can be allocated to lower
-modes.
+`mwidlist`). It is up to the platform architect to decide whether to
+allow this or not.
 
 === Smwdeleg(h) / Sswid extensions
 
@@ -226,21 +227,22 @@ Like any other WARL register, M-mode software is expected to read back the
 configured value to verify it is indeed legal.
 
 The Sswid extension adds the [H]S-mode read-write `slwid` CSR, which
-sets the WID used for modes lower than [H]S-mode.  The `slwid` is
-WARL, with `mwiddeleg` specifying the legal values for `slwid`.  If an
-unauthorized WID is written to `slwid`, the lowest-numbered legal WID is
-returned.  When Sswid is present, `mlwid` now specifies the WID for
-[H]S-mode only, and `slwid` specifies the WID for lower-privilege
-modes (U, VS, VU). Like any other WARL register, S-mode software is
-expected to read back the configured value to verify it is indeed legal.
+sets the WID used for modes lower than [H]S-mode.  The `slwid` field is WARL
+that can contain Ceil(Log~2~NWorlds)-1:0 writable bits. Like any other WARL
+register, S-mode software is expected to read back the configured value to
+verify it is indeed legal. An unauthorized WID (per the `mwiddeleg` list) can
+be written to `slwid`. In that case, when the lower-privilege mode attempts to
+fetch its first instruction in an illegal world, the hart will take a precise
+exception indicating the Software Check cause. 
 
-If the value in `mwiddeleg` is non-zero, the Sswid extension is
-enabled.  When `mwiddeleg` is set to a non-zero value, `slwid` is
-initialized to the lowest-numbered world present in `mwiddeleg`.
+.Smwdeleg/Sswid extensions: Support for S-mode to control the lower privilege modes world
+image::images/Smwdeleg_Sswid.svg[width=600]
+
+If the value in `mwiddeleg` is non-zero, the Sswid extension is enabled.
 
 If the value in `mwiddeleg` is zero, then the Sswid extension is
 disabled and accesses to `slwid` raise an illegal instruction
-exception.
+exception. `mlwid` world is assigned to [H]S-mode and lower privilege modes.
 
 NOTE: If the system supports demand-paged virtual memory, then any
 address-translation caches must ensure that translations are cached
