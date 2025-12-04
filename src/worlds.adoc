@@ -85,12 +85,6 @@ privilege modes, thereby adding the *Sswid* extension to [H]S-mode.
 
 All accesses, including implicit memory references such as instruction
 fetches and page-table walks, must be tagged with the appropriate WID.
-For the purposes of worlds permissions, instruction fetches are treated as
-memory reads.
-
-NOTE: Bus fabrics typically do not differentiate instruction fetches
-from memory reads, and so worlds permissions checkers located on the other
-side of the bus fabric are unable to distinguish these two cases.
 
 *World-ID extensions do not allow a privilege mode to change its own WID.*
 The WID of M-mode on a hart (`mwid`) is set by the external environment.
@@ -172,10 +166,12 @@ bits.
 It is platform-specific which worlds can be used by lower-privilege modes
 on this hart.
 
-NOTE: M-mode software can not discover which worlds are available to be assigned
-to lower modes nor which resources are accessible in each world.  The platform
-software will have predetermined allocations for the worlds on a platform and 
-all required information needed by M-mode software must be provided out-of-band.
+NOTE: There is no HW discovery mechanism for M-mode software to discover the
+available worlds and their permissions (besides taking exceptions). Information
+about worlds and resources assignment must be provided to SW via sideband
+channels.  The platform software will have predetermined allocations for the
+worlds on a platform and all required information needed by M-mode software
+must be provided out-of-band.
 
 A list of WID values authorized for this hart to be used by lower-privilege
 modes can be provided. `mwidlist` (width of NWorlds) represents a set
