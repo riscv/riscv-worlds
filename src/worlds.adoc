@@ -174,17 +174,17 @@ worlds on a platform and all required information needed by M-mode software
 must be provided out-of-band.
 
 A list of WID values authorized for this hart to be used by lower-privilege
-modes can be provided. `mwidlist` (width of NWorlds) represents a set
+modes can be provided. `mlwidlist` (width of NWorlds) represents a set
 of WIDs as a bit vector, with WID _i_ represented by bit _i_ of the register.
 
-If an unauthorized WID (per the `mwidlist`) is written to `mlwid`, when the
+If an unauthorized WID (per the `mlwidlist`) is written to `mlwid`, when the
 lower-privilege mode attempts to fetch its first instruction in an illegal world,
 the hart will take a precise exception indicating the software-check cause.
 Similarly, after a `mpriv` update, if the lower-privilege attempts to perform a
 load or store in an illegal world, the hart will take a precise exception
 indicating the software-check cause.
 
-When this exception is raised, the `xtval` register is set to 0 (no information
+When this exception is raised, the `__x__tval` register is set to 0 (no information
 provided).  The software-check exception caused by illegal world has higher
 priority than any access-fault exception and leads to a trap being delivered
 to M-mode.
@@ -198,7 +198,7 @@ lower-privilege modes.
 
 NOTE: The platform is not required to allow lower-privilege modes to
 be in the same world as M-mode. (`mwid` value may not be included in the
-`mwidlist`). It is up to the platform architect to decide whether to
+`mlwidlist`). It is up to the platform architect to decide whether to
 allow this or not.
 
 === Smwdeleg(h) / Sswid extensions
@@ -218,7 +218,7 @@ WID _i_ represented by bit _i_ of the register.  The `mwiddeleg` CSR
 is a WARL register where each bit that can be set indicates a WID that
 is delegated to S-mode.  The set of worlds that can be delegated to
 S-mode on a hart is platform-specific. Legal values are defined by
-`mwidlist`.
+`mlwidlist`.
 
 The Smwdelegh extension adds the `mwiddeleg1`, `mwiddeleg2`, and
 `mwiddeleg3` M-mode read-write CSRs.
@@ -226,7 +226,7 @@ The Smwdelegh extension adds the `mwiddeleg1`, `mwiddeleg2`, and
 NOTE: Different harts on a platform can have different sets of
 delegable worlds.
 
-When `mwiddeleg` CSR is written, the data is ANDed with `mwidlist` to
+When `mwiddeleg` CSR is written, the data is ANDed with `mlwidlist` to
 determine the final legal value. If the result is zero, the Sswid extension
 is disabled. If the result is non-zero, the Sswid extension is enabled.
 Like any other WARL register, M-mode software is expected to read back the
@@ -246,7 +246,7 @@ Similarly, after a `mpriv` update, if the lower-privilege attempts to perform a
 load or store in an illegal world, the hart will take a precise exception
 indicating the software-check cause.
 
-When this exception is raised, the `xtval` register is set to 0 (no information
+When this exception is raised, the `__x__tval` register is set to 0 (no information
 provided).  The software-check exception caused by illegal world has higher
 priority than any access-fault exception and leads to a trap being delivered
 to M-mode.
