@@ -176,9 +176,19 @@ must be provided out-of-band.
 A list of WID values authorized for this hart to be used by lower-privilege
 modes can be provided. `mwidlist` (width of NWorlds) represents a set
 of WIDs as a bit vector, with WID _i_ represented by bit _i_ of the register.
+
 If an unauthorized WID (per the `mwidlist`) is written to `mlwid`, when the
 lower-privilege mode attempts to fetch its first instruction in an illegal world,
-the hart will take a precise exception indicating the Software Check cause.
+the hart will take a precise exception indicating the software-check cause.
+Similarly, after a `mpriv` update, if the lower-privilege attempts to perform a
+load or store in an illegal world, the hart will take a precise exception
+indicating the software-check cause.
+
+When this exception is raised, the `xtval` register is set to 0 (no information
+provided).  The software-check exception caused by illegal world has higher
+priority than any access-fault exception and leads to a trap being delivered
+to M-mode.
+
 
 .Smwid extension: Support for M-mode to control the lower privilege modes world
 image::images/Smwid.svg[width=400]
@@ -226,10 +236,20 @@ The Sswid extension adds the S-mode read-write `slwid` CSR, which
 sets the WID used for modes lower than S-mode.  The `slwid` field is WARL
 that can contain Ceil(Log~2~NWorlds)-1:0 writable bits. Like any other WARL
 register, S-mode software is expected to read back the configured value to
-verify it is indeed legal. An unauthorized WID (per the `mwiddeleg` list) can
+verify it is indeed legal.
+
+An unauthorized WID (per the `mwiddeleg` list) can
 be written to `slwid`. In that case, when the lower-privilege mode attempts to
 fetch its first instruction in an illegal world, the hart will take a precise
-exception indicating the Software Check cause. 
+exception indicating the software-check cause. 
+Similarly, after a `mpriv` update, if the lower-privilege attempts to perform a
+load or store in an illegal world, the hart will take a precise exception
+indicating the software-check cause.
+
+When this exception is raised, the `xtval` register is set to 0 (no information
+provided).  The software-check exception caused by illegal world has higher
+priority than any access-fault exception and leads to a trap being delivered
+to M-mode.
 
 .Smwdeleg/Sswid extensions: Support for S-mode to control the lower privilege modes world
 image::images/Smwdeleg_Sswid.svg[width=600]
