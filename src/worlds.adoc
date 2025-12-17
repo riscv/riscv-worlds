@@ -80,8 +80,8 @@ does not require an ISA extension and fixes the WID for all privilege
 modes on a hart.  The second level is the *Smwid* extension, which
 enables M-mode to control the WID of lower-privilege modes.  The third
 level is the *Smwdeleg* and *Smwdelegh* extensions, which further enable
-M-mode to delegate to [H]S-mode the ability to assign the WID of lower-
-privilege modes, thereby adding the *Sswid* extension to [H]S-mode.
+M-mode to delegate to S-mode the ability to assign the WID of lower-
+privilege modes, thereby adding the *Sswid* extension to S-mode.
 
 All accesses, including implicit memory references such as instruction
 fetches and page-table walks, must be tagged with the appropriate WID.
@@ -105,10 +105,10 @@ WIDs to its privilege modes.  The new CSRs are listed in the Table below.
 | `XLEN` | `mlwid` | WARL for M | `0x390` | WID used for lower privilege modes.
 `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
 | `XLEN` | `mwiddeleg` (aka `mwiddeleg0`) | WARL for M | `0x748` | Set of WID
-values delegated to [H]S-mode, represented as a bit vector. `NWorlds` LSBs
+values delegated to S-mode, represented as a bit vector. `NWorlds` LSBs
 are used, others are zero.
-| `XLEN` | `slwid` | WARL for [H]S | `0x190` | WID value used in lower modes
-(i.e., U, VS, or VU). `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
+| `XLEN` | `slwid` | WARL for S | `0x190` | WID value used in lower modes
+(i.e., U-mode). `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
 |===
 
 These extensions support NWorlds {le} `XLEN`.
@@ -122,11 +122,11 @@ The additional CSRs are listed below.
 |===
 |Size in bits|Register|Access|Proposed CSR Address|Description
 | `XLEN` | `mwiddeleg1` | WARL for M | | Set of WID values delegated to
-[H]S-mode (WID 32 to 63), represented as a bit vector, RV32 only.
+S-mode (WID 32 to 63), represented as a bit vector, RV32 only.
 | `XLEN` | `mwiddeleg2` | WARL for M | | Set of WID values delegated to
-[H]S-mode (WID {ge} 64), represented as a bit vector.
+S-mode (WID {ge} 64), represented as a bit vector.
 | `XLEN` | `mwiddeleg3` | WARL for M | | Set of WID values delegated to
-[H]S-mode (WID 96 to 127), represented as a bit vector, RV32 only.
+S-mode (WID 96 to 127), represented as a bit vector, RV32 only.
 |===
 
 === One world per hart
@@ -194,20 +194,20 @@ allow this or not.
 === Smwdeleg(h) / Sswid extensions
 
 The Smwdeleg extension requires the Smwid extension and allows M-mode to
-delegate to [H]S-mode the ability to allocate WIDs to privilege modes
-lower than [H]S.  The Smwdeleg extension optionally enables the Sswid
-extension for [H]S-mode.
+delegate to S-mode the ability to allocate WIDs to privilege modes
+lower than S.  The Smwdeleg extension optionally enables the Sswid
+extension for S-mode.
 
 The Smwdelegh extension requires the Smwdeleg extension and extends the
-set of worlds that can be delegated to [H]S-mode to include WIDs up to
+set of worlds that can be delegated to S-mode to include WIDs up to
 127.
 
 The Smwdeleg extension adds the `mwiddeleg` M-mode read-write CSR.  The
 `mwiddeleg` register represents a set of WIDs as a bit vector with
 WID _i_ represented by bit _i_ of the register.  The `mwiddeleg` CSR
 is a WARL register where each bit that can be set indicates a WID that
-is delegated to [H]S-mode.  The set of worlds that can be delegated to
-[H]S-mode on a hart is platform-specific. Legal values are defined by
+is delegated to S-mode.  The set of worlds that can be delegated to
+S-mode on a hart is platform-specific. Legal values are defined by
 `mwidlist`.
 
 The Smwdelegh extension adds the `mwiddeleg1`, `mwiddeleg2`, and
@@ -222,8 +222,8 @@ is disabled. If the result is non-zero, the Sswid extension is enabled.
 Like any other WARL register, M-mode software is expected to read back the
 configured value to verify it is indeed legal.
 
-The Sswid extension adds the [H]S-mode read-write `slwid` CSR, which
-sets the WID used for modes lower than [H]S-mode.  The `slwid` field is WARL
+The Sswid extension adds the S-mode read-write `slwid` CSR, which
+sets the WID used for modes lower than S-mode.  The `slwid` field is WARL
 that can contain Ceil(Log~2~NWorlds)-1:0 writable bits. Like any other WARL
 register, S-mode software is expected to read back the configured value to
 verify it is indeed legal. An unauthorized WID (per the `mwiddeleg` list) can
@@ -238,15 +238,15 @@ If the value in `mwiddeleg` is non-zero, the Sswid extension is enabled.
 
 If the value in `mwiddeleg` is zero, then the Sswid extension is
 disabled and accesses to `slwid` raise an illegal instruction
-exception. `mlwid` world is assigned to [H]S-mode and lower privilege modes.
+exception. `mlwid` world is assigned to S-mode and lower privilege modes.
 
 NOTE: If the system supports demand-paged virtual memory, then any
 address-translation caches must ensure that translations are cached
 separately for each WID.  A simple implementation can flush
 address-translation caches on any write to `mwiddeleg` or `slwid`.
 
-When the hypervisor extension is present `slwid` sets the WID for both
-VS and VU mode, as well as U mode.
+//When the hypervisor extension is present `slwid` sets the WID for both
+//VS and VU mode, as well as U mode.
 
 NOTE: The Sswid extension is not available to a guest OS.
 
