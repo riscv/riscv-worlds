@@ -415,7 +415,7 @@ Upper 32 bits of `stimecmp`, RV32 only.
 |`0x190`
 |SRW
 |`slwid`
-| Supervisor WID value for lower privilege modes (i.e., U, VS or VU) Register.
+| Supervisor WID value for lower privilege modes (i.e., U-mode) Register.
 |===
 
 <<<
@@ -921,19 +921,19 @@ Resumable NMI status.
 |`0x748`
 |MRW
 |`mwiddeleg` aka `mwiddeleg0`
-| Machine WID values delegated to [H]S mode Register.
+| Machine WID values delegated to S mode Register.
 |
 |MRW
 |`mwiddeleg1`
-| Machine WID values delegated to [H]S mode Register, RV32 only.
+| Machine WID values delegated to S mode Register, RV32 only.
 |`0x748`
 |MRW
 |`mwiddeleg2`
-| Machine WID values delegated to [H]S mode Register.
+| Machine WID values delegated to S mode Register.
 |`0x748`
 |MRW
 |`mwiddeleg3`
-| Machine WID values delegated to [H]S mode Register, RV32 only.
+| Machine WID values delegated to S mode Register, RV32 only.
 
 4+^|Machine Counter/Timers
 
