@@ -1,3 +1,6 @@
+:le: &#8804;
+:ge: &#8805;
+
 [[worlds]]
 
 == RISC-V Worlds Overview
@@ -180,9 +183,10 @@ of WIDs as a bit vector, with WID _i_ represented by bit _i_ of the register.
 If an unauthorized WID (per the `mlwidlist`) is written to `mlwid`, when the
 lower-privilege mode attempts to fetch its first instruction in an illegal world,
 the hart will take a precise exception indicating the software-check cause.
-Similarly, after a `mpriv` update, if the lower-privilege attempts to perform a
-load or store in an illegal world, the hart will take a precise exception
-indicating the software-check cause.
+Similarly, after a MPRIV update in `mstatus` to modify the effective privilege
+mode to a less-privileged mode at which load and stores are executed, if the 
+lower-privilege attempts to perform a load or store in an illegal world, the
+hart will take a precise exception indicating the software-check cause.
 
 When this exception is raised, the `mtval` register is set to "illegal world
 fault (code=4)".  The software-check exception caused by Smwid has higher
@@ -242,7 +246,7 @@ An unauthorized WID (per the `mwiddeleg` list) can
 be written to `slwid`. In that case, when the lower-privilege mode attempts to
 fetch its first instruction in an illegal world, the hart will take a precise
 exception indicating the software-check cause. 
-Similarly, after a `mpriv` update, if the lower-privilege attempts to perform a
+Similarly, after a MPRIV update, if the lower-privilege attempts to perform a
 load or store in an illegal world, the hart will take a precise exception
 indicating the software-check cause.
 
