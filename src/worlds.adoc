@@ -139,7 +139,7 @@ is allowed to determine any information about worlds configuration is
 platform-specific.
 
 .One world per hart
-image::images/one_world.svg[width=200]
+image::images/drawio/one_world.svg[width=200]
 
 NOTE: The `mwid` can be set via a pinstrap, a fuse or a RoT-controlled
 register. The implementation is platform-specific.
@@ -191,7 +191,7 @@ to M-mode.
 
 
 .Smwid extension: Support for M-mode to control the lower privilege modes world
-image::images/Smwid.svg[width=400]
+image::images/drawio/Smwid.svg[width=400]
 
 M-mode may have a different WID than any assignable by `mlwid` to
 lower-privilege modes.
@@ -252,7 +252,7 @@ priority than any access-fault exception and leads to a trap being delivered
 to M-mode.
 
 .Smwdeleg/Sswid extensions: Support for S-mode to control the lower privilege modes world
-image::images/Smwdeleg_Sswid.svg[width=600]
+image::images/drawio/Smwdeleg_Sswid.svg[width=600]
 
 If the value in `mwiddeleg` is non-zero, the Sswid extension is enabled.
 
