@@ -184,10 +184,10 @@ Similarly, after a `mpriv` update, if the lower-privilege attempts to perform a
 load or store in an illegal world, the hart will take a precise exception
 indicating the software-check cause.
 
-When this exception is raised, the `__x__tval` register is set to 0 (no information
-provided).  The software-check exception caused by illegal world has higher
-priority than any access-fault exception and leads to a trap being delivered
-to M-mode.
+When this exception is raised, the `mtval` register is set to "illegal world
+fault (code=4)".  The software-check exception caused by Smwid has higher
+priority than any access-fault exception (See <<exception-priority>> of 
+Privileged Specification) and leads to a trap being delivered to M-mode.
 
 
 .Smwid extension: Support for M-mode to control the lower privilege modes world
@@ -246,10 +246,10 @@ Similarly, after a `mpriv` update, if the lower-privilege attempts to perform a
 load or store in an illegal world, the hart will take a precise exception
 indicating the software-check cause.
 
-When this exception is raised, the `__x__tval` register is set to 0 (no information
-provided).  The software-check exception caused by illegal world has higher
-priority than any access-fault exception and leads to a trap being delivered
-to M-mode.
+When this exception is raised, the `mtval` register is set to "illegal world
+fault (code=4)".  The software-check exception caused by Smwid has higher
+priority than any access-fault exception (See <<exception-priority>> of 
+Privileged Specification) and leads to a trap being delivered to M-mode.
 
 .Smwdeleg/Sswid extensions: Support for S-mode to control the lower privilege modes world
 image::images/drawio/Smwdeleg_Sswid.svg[width=600]
