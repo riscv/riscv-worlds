@@ -299,11 +299,19 @@ The Smwdelegh extension adds the `mwiddeleg1`, `mwiddeleg2`, and
 NOTE: Different harts on a platform can have different sets of
 delegable worlds.
 
-When `mwiddeleg` CSR is written, the data is ANDed with `mlwidlist` to
-determine the final legal value. If the result is zero, the Sswid extension
-is disabled. If the result is non-zero, the Sswid extension is enabled.
-Like any other WARL register, M-mode software is expected to read back the
-configured value to verify it is indeed legal.
+`mwiddeleg` is always a subset of `mlwidlist` (if Smlwidlist is enabled) and
+`plwidlist` (if implemented by the platform). Attempts to authorize a WID in
+`mwiddeleg` that is not authorized in `mlwidlist`/`plwidlist` will fail - the
+WARL behavior will mask off any such bits. Simiarly, if `mlwidlist` is updated,
+any WIDs that are de-authorized (set to zero) will be implicitly de-authorized
+in `mwiddeleg` also.
+
+If `mwiddeleg` is zero (which may happen even if non-zero values are written to
+it, see the previous paragraph), the Sswid extension is disabled, in which case
+any accesses to the `slwid` CSR raise an illegal instruction exception.
+Otherwise, if `mwiddeleg` is non-zero, the Sswid extension is enabled.  Like
+any other WARL register, M-mode software is expected to read back the register
+to determine the actual configuration retained by the implementation.
 
 The Sswid extension adds the S-mode read-write `slwid` CSR, which
 sets the WID used for modes lower than S-mode.  The `slwid` field is WARL
@@ -311,13 +319,12 @@ that can contain Ceil(Log~2~NWorlds)-1:0 writable bits. Like any other WARL
 register, S-mode software is expected to read back the configured value to
 verify it is indeed legal.
 
-An unauthorized WID (per the `mwiddeleg` list) can
-be written to `slwid`. In that case, when the lower-privilege mode attempts to
-fetch its first instruction in an illegal world, the hart will take a precise
-exception indicating the software-check cause. 
-Similarly, after a MPRIV update, if the lower-privilege attempts to perform a
-load or store in an illegal world, the hart will take a precise exception
-indicating the software-check cause.
+If an unauthorized WID (per the `mwiddeleg` list) is written to `slwid`, then
+the first attempt to fetch an instruction by U-mode will take a precise
+exception indicating the software-check cause.  Similarly, after a MPRV update,
+any attempt by M-mode to perform a load or store "as U-mode" will be subject to
+the same `mwiddeleg` authorization check, meaning that it may also take a
+precise exception (indicating the software-check cause).
 
 When this exception is raised, the `mtval` register is set to "illegal world
 fault (code=4)".  The software-check exception caused by Smwid has higher
@@ -326,12 +333,6 @@ Privileged Specification) and leads to a trap being delivered to M-mode.
 
 .Smwdeleg/Sswid extensions: Support for S-mode to control the lower privilege mode's world, shown here with Smwid, Smlwidlist, and a locked-on-reset `mwid`.
 image::drawio/Smwdeleg_Sswid.svg[Smwdeleg_Sswid,align="center"]
-
-If the value in `mwiddeleg` is non-zero, the Sswid extension is enabled.
-
-If the value in `mwiddeleg` is zero, then the Sswid extension is
-disabled and accesses to `slwid` raise an illegal instruction
-exception. `mlwid` world is assigned to S-mode and lower privilege modes.
 
 NOTE: If the system supports demand-paged virtual memory, then any
 address-translation caches must ensure that translations are cached
@@ -345,7 +346,7 @@ NOTE: The Sswid extension is not available to a guest OS.
 
 There is no requirement for `mwiddeleg` to contain the WID in `mlwid`,
 i.e., S-mode can be set to a different world than the ones it is
-allowed to assign to lower modes using `slwid` when Sswid is enabled.
+allowed to assign to U-mode using `slwid` when Sswid is enabled.
 
 At reset, `mwiddeleg` is set to zero and hence Sswid is disabled.
 
