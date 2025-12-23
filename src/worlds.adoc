@@ -191,7 +191,10 @@ setting the WID (and locking it, presumably).
 
 The platform may limit the set of WIDs that may be used with `mwid` via a
 non-ISA `pwidlist` mask - assigning a WID value to `mwid` that is not enabled
-by that mask will result in the hart's transactions being trapped.
+by that mask will result in the hart's transactions being trapped. This will
+result in a complete hang of the hart (it will be unable to fetch
+instructions), but that is the appropriate outcome if M-mode attempts to
+contravene platform-imposed constraints.
 
 .Smwid extension: shown here with an unlocked-on-reset `mwid`.
 image::drawio/Smwid.svg[Smwid,align="center"]
