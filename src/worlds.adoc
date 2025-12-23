@@ -180,7 +180,9 @@ image::drawio/world_none.svg[WorldNone,align="center"]
 
 This extension introduces the lockable `mwid` CSR. This CSR provides a view of
 the WID value for all outgoing transactions and includes a sticky lock-bit to
-determine its mutability.
+determine its mutability. The lock bit is at offset 31 within the CSR, and
+observes W1SS semantics. The WID field occupies the least-significant bits of
+the CSR.
 
 On-reset, the `mwid` CSR is expected to show the platform-defined `pwid` value.
 The `mwid` CSR may be locked immediately out of reset, or the platform may
@@ -236,8 +238,8 @@ When this exception is raised, the `mtval` register is set to "illegal world
 fault (code=4)".  The software-check exception caused by Smwid has higher
 priority than any access-fault exception (See <<exception-priority>> of
 Privileged Specification) and leads to a trap being delivered to M-mode. (For
-example, if M-mode uses MPRV to issue a transaction as S or U mode, it is
-possible for that transaction to be eligible to generate an access fault (due
+example, if M-mode uses MPRV to issue a transaction as S or U mode,
+that transaction may be eligible to generate an access fault (due
 to MMU and/or PMP constraints) _as well as_ a software-check exception (due to
 an unauthorized WID) - in that case, the software-check has priority and
 supercedes the access fault.
@@ -258,8 +260,11 @@ whether or not to allow this.
 The *Smlwidlist* extension depends on the *Smwid* extension and introduces the
 `mlwidlist` CSR to allow M-mode to further restrict the set of WIDs that may be
 used with `mlwid` (beyond any limitations already imposed by the platform via
-the `plwidlist` mask). The `mlwidlist` CSR is locked (read-only) whenever
-`mwid` is locked.
+the `plwidlist` mask). `mlwidlist` (width of NWorlds) represents a set of WIDs
+as a bit vector, with WID _i_ represented by bit _i_ of the register.
+
+The `mlwidlist` CSR is locked (read-only) whenever `mwid` is locked, it does
+not have a distinct lock bit.
 
 .Smlwidlist extension: shown here with an unlocked-on-reset `mwid`.
 image::drawio/Smlwidlist.svg[Smlwidlist,align="center"]
@@ -319,8 +324,8 @@ fault (code=4)".  The software-check exception caused by Smwid has higher
 priority than any access-fault exception (See <<exception-priority>> of 
 Privileged Specification) and leads to a trap being delivered to M-mode.
 
-.Smwdeleg/Sswid extensions: Support for S-mode to control the lower privilege mode's world, shown here with Smwid, Smlwidlist, and an unlocked-on-reset `mwid`.
-image::drawio/Smwdeleg_Sswid.svg[]
+.Smwdeleg/Sswid extensions: Support for S-mode to control the lower privilege mode's world, shown here with Smwid, Smlwidlist, and a locked-on-reset `mwid`.
+image::drawio/Smwdeleg_Sswid.svg[Smwdeleg_Sswid,align="center"]
 
 If the value in `mwiddeleg` is non-zero, the Sswid extension is enabled.
 
