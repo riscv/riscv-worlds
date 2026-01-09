@@ -40,7 +40,7 @@ configurations dynamically while the system is running is not a goal of
 the current specification.
 
 When an agent context initiates a transaction to a physical address,
-hardware marks the transaction with the WID of the agent context.  The
+hardware tags the transaction with the WID of the agent context.  The
 transaction is only allowed to complete successfully if the targeted
 resource has the appropriate access permissions (read or write)
 on that address for the WID on the transaction.  The permission checks
@@ -94,8 +94,9 @@ There are the following levels of Worlds support on RISC-V harts.
   used with `mlwid`. The `mlwidlist` CSR is locked (read-only) whenever `mwid`
   is locked.
 * Next comes the *Smwdeleg* extension, which further enable
-  M-mode to delegate to S-mode the ability to assign the WID of lower-
-  privilege modes, thereby adding the *Sswid* extension to S-mode.
+  M-mode to delegate to S-mode the ability to assign the WID of S-mode lower-
+  privilege modes (i.e., U-mode), thereby adding the *Sswid* extension to S-mode
+  with the `slwid` CSR.
 
 All accesses, including implicit memory references such as instruction
 fetches and page-table walks, must be tagged with the appropriate WID.
@@ -145,14 +146,15 @@ hart to observe and modify the WID assigned to M-mode as well as the set of
 WIDs that are delegated to lower privilege modes.
 
 [cols="1,1,^1,^1,5"]
-.World-ID CSRs
+.Optional World-ID CSRs
 |===
 |Size in bits|Register|Access|Proposed CSR Address|Description
 | `XLEN` | `mwid` | WARL for M | ??? | WID used for M-mode with the optional
-Smwid extension.  `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
+Smwid extension.  `Ceil(Log~2~NWorlds)` LSBs are used, others are zero except
+for the lock bit at offset `XLEN-1`.
 | `XLEN` | `mlwidlist` | WARL for M | ??? | Set of WID values delegated to
 M-mode, represented as a bit vector.  `NWorlds` LSBs are used,
-others are zero.
+others are zero. Register is locked (read-only) whenever `mwid` is locked.
 |===
 
 All RISC-V Worlds extensions support NWorlds {le} `XLEN`.
@@ -174,9 +176,12 @@ image::drawio/world_none.svg[WorldNone,align="center"]
 
 This extension introduces the lockable `mwid` CSR. This CSR provides a view of
 the WID value for all outgoing transactions and includes a sticky lock-bit to
-determine its mutability. The lock bit is at offset `XLEN-1` within the CSR, and
-observes W1SS semantics. The WID field occupies the least-significant bits of
-the CSR.
+determine its mutability. The lock bit (`L`) is at offset `XLEN-1` within the CSR.
+The WID field occupies the Ceil(Log~2~NWorlds)-1:0 writable bits.
+
+The lock bit is sticky, meaning that once set it cannot be unset until the
+hart is reset.  Once the `mwid` CSR is locked (by setting `L` to 1), any attempt
+to write to the CSR is ignored. The CSR becomes read-only.
 
 On-reset, the `mwid` CSR is expected to show the platform-defined `pmwid` value.
 The `mwid` CSR may be locked immediately out of reset, or the platform may
@@ -212,7 +217,7 @@ address-translation caches must ensure that translations are cached
 separately for each WID.  A simple implementation can flush
 address-translation caches on any `mlwid` write.
 
-The `mlwid` field is WARL that can contain Ceil(Log~2~NWorlds)-1:0 writable
+The `mlwid` CSR is WARL that can contain Ceil(Log~2~NWorlds)-1:0 writable
 bits.
 
 It is platform-specific which worlds can be used by lower-privilege modes
@@ -295,8 +300,7 @@ The Smwdeleg extension adds the `mwiddeleg` M-mode read-write CSR.  The
 WID _i_ represented by bit _i_ of the register.  The `mwiddeleg` CSR
 is a WARL register where each bit that can be set indicates a WID that
 is delegated to S-mode.  The set of worlds that can be delegated to
-S-mode on a hart is platform-specific. Legal values are defined by
-`mlwidlist`.
+S-mode on a hart is platform-specific.
 
 NOTE: Different harts on a platform can have different sets of
 delegable worlds.
@@ -304,7 +308,7 @@ delegable worlds.
 `mwiddeleg` is always a subset of `mlwidlist` (if Smlwidlist is enabled) and
 `pmlwidlist` (if implemented by the platform). Attempts to authorize a WID in
 `mwiddeleg` that is not authorized in `mlwidlist`/`pmlwidlist` will fail - the
-WARL behavior will mask off any such bits. Simiarly, if `mlwidlist` is updated,
+WARL behavior will mask off any such bits. Similarly, if `mlwidlist` is updated,
 any WIDs that are de-authorized (set to zero) will be implicitly de-authorized
 in `mwiddeleg` also.
 
@@ -317,9 +321,7 @@ to determine the actual configuration retained by the implementation.
 
 The Sswid extension adds the S-mode read-write `slwid` CSR, which
 sets the WID used for modes lower than S-mode.  The `slwid` field is WARL
-that can contain Ceil(Log~2~NWorlds)-1:0 writable bits. Like any other WARL
-register, S-mode software is expected to read back the configured value to
-verify it is indeed legal.
+that can contain Ceil(Log~2~NWorlds)-1:0 writable bits.
 
 If an unauthorized WID (per the `mwiddeleg` list) is written to `slwid`, then
 the first attempt to fetch an instruction by U-mode will take a precise
