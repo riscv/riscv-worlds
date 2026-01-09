@@ -2073,7 +2073,7 @@ the cause for the exception. The following encodings are defined:
 * 0 - No information provided.
 * 2 - Landing Pad Fault. Defined by the Zicfilp extension (<<priv-forward>>).
 * 3 - Shadow Stack Fault. Defined by the Zicfiss extension (<<priv-backward>>).
-* 4 - Illegal World Fault. Defined by the Smwid and Sswid extensions (<<worlds>>).
+* 4 - Illegal World Fault. Defined by the Smlwid and Sswid extensions (<<worlds>>).
 
 For other traps, `mtval` is set to zero, but a future standard may
 redefine `mtval`’s setting for other traps.
