@@ -86,13 +86,15 @@ There are the following levels of Worlds support on RISC-V harts.
   all privilege modes on a hart. This platform-defined value is referred to as
   `pmwid`.
 * With the *Smwid* extension, the `mwid` CSR is introduced to provide a
-  lockable control of the WID value assigned to the hart.
+  lockable control of the WID value assigned to the hart. A platform-defined
+  value, `pmwidlist`, may limit the set of WIDs that can be used with `mwid`.
 * The *Smlwid* extension introduces the `mlwid` CSR to control the WID of
-  lower-privilege modes.
-* The *Smlwidlist* extension depends on the *Smwid* extension and introduces
-  the `mlwidlist` CSR to allow M-mode to restrict the set of WIDs that may be
-  used with `mlwid`. The `mlwidlist` CSR is locked (read-only) whenever `mwid`
-  is locked.
+  lower-privilege modes. A platform-defined value, `pmlwidlist`, may limit the
+  set of WIDs that can be used with `mlwid`.
+* The *Smlwidlist* extension depends on the *Smwid* and *Smlwid* extensions, it
+  introduces the `mlwidlist` CSR to allow M-mode to restrict the set of WIDs
+  that may be used with `mlwid`. The `mlwidlist` CSR is locked (read-only)
+  whenever `mwid` is locked.
 * Next comes the *Smwdeleg* extension, which further enable
   M-mode to delegate to S-mode the ability to assign the WID of S-mode lower-
   privilege modes (i.e., U-mode), thereby adding the *Sswid* extension to S-mode
@@ -169,7 +171,7 @@ platform-defined, we refer to it as `pmwid`, and it might take any non-ISA form
 of WIDs to harts, and whether (and how) a hart is able to determine any
 information about Worlds configuration, is platform-specific.
 
-.One World with no ISA extension
+.One world with no ISA extension
 image::drawio/world_none.svg[WorldNone,align="center"]
 
 === One world per hart with the Smwid extension
@@ -196,8 +198,7 @@ result in a complete hang of the hart (it will be unable to fetch
 instructions), but that is the appropriate outcome if M-mode attempts to
 contravene platform-imposed constraints.
 
-
-.One World with the Smwid extension
+.One world with the Smwid extension
 image::drawio/Smwid.svg[Smwid,align="center"]
 
 === Smlwid extension
@@ -253,7 +254,7 @@ to MMU and/or PMP constraints) _as well as_ a software-check exception (due to
 an unauthorized WID) - in that case, the software-check has priority and
 supercedes the access fault.
 
-.Smlwid extension: Support for M-mode to control the lower privilege modes' world
+.Smlwid extension: Support for M-mode to control lower privilege modes' world, shown here without Smwid.
 image::drawio/Smlwid.svg[Smlwid_none,align="center"]
 
 M-mode may have a different WID than any assignable by `mlwid` to
@@ -265,12 +266,12 @@ the platform to determine whether or not to allow this.
 
 === Smlwidlist extension
 
-The Smlwidlist extension depends on the Smwid extension and introduces the
-`mlwidlist` CSR to allow M-mode to further restrict the set of WIDs that may be
-used with `mlwid` (beyond any limitations already imposed by the platform via
-the `pmlwidlist` mask). Like `pmlwidlist`, `mlwidlist` (width of NWorlds)
-represents a set of WIDs as a bit vector, with WID _i_ represented by bit _i_
-of the register.
+The Smlwidlist extension depends on the Smwid and Smlwid extensions, it
+introduces the `mlwidlist` CSR to allow M-mode to further restrict the set of
+WIDs that may be used with `mlwid` (beyond any limitations already imposed by
+the platform via the `pmlwidlist` mask). Like `pmlwidlist`, `mlwidlist` (width
+of NWorlds) represents a set of WIDs as a bit vector, with WID _i_ represented
+by bit _i_ of the register.
 
 On-reset, the `mlwidlist` CSR is expected to show the platform-defined
 `pmlwidlist` value.
@@ -278,7 +279,7 @@ On-reset, the `mlwidlist` CSR is expected to show the platform-defined
 The `mlwidlist` CSR is locked (read-only) whenever `mwid` is locked, it does
 not have a distinct lock bit.
 
-.Smlwid with Smlwidlist extension
+.Smlwidlist extension, shown here with the Smwid and Smlwid dependencies.
 image::drawio/Smlwidlist.svg[Smlwidlist,align="center"]
 
 The `mlwidlist` mask is WARL such that any attempts to enable a WID in the mask
@@ -335,7 +336,7 @@ fault (code=4)".  The software-check exception caused by Sswid has higher
 priority than any access-fault exception (See <<exception-priority>> of 
 Privileged Specification) and leads to a trap being delivered to M-mode.
 
-.Smwdeleg/Sswid extensions: Support for S-mode to control the lower privilege mode's world.
+.Smwdeleg/Sswid extensions: Support for S-mode to control U-mode's world. Shown here without Smwid or Smlwidlist.
 image::drawio/Smwdeleg_Sswid.svg[Smwdeleg_Sswid,align="center"]
 
 NOTE: If the system supports demand-paged virtual memory, then any
