@@ -6,54 +6,44 @@
 
 == RISC-V Worlds
 
-The _RISC-V Worlds_ provides isolation in a hardware platform by
-constraining access to system physical addresses.  It provides
-_Worlds_ , which are execution contexts that include agents (such as
-harts and devices) that can initiate a transaction on a physical
-address within a world, and resources (such as memories and peripheral
-devices) that respond to transactions at a physical address within a
-world.  Worlds are created and configured by a trusted execution
-environment, usually at system boot time.
+_RISC-V Worlds_ provides isolation in a hardware platform by constraining
+access to system physical addresses. It provides _Worlds_, which are system
+partitions consisting of execution contexts (including agents, such as harts
+and devices, that can initiate a transaction on a physical address within a
+world) and resources (such as memories and peripheral devices, which respond to
+transactions at a physical address within a world). Worlds are created and
+configured by a trusted execution environment, usually at system boot time.
 
-Worlds are uniquely identified by a hardware _World_ _Identifier_
-(_WID_) and the maximum number of unique WIDs on a platform is
-_NWorlds_.  Increasing NWorlds increases the hardware cost, and in
-practice, 2-8 WIDs (requiring 1-3 bits to represent) are sufficient
-for many use cases.
+Worlds are uniquely identified by a _World_ _Identifier_ (_WID_) that
+is associated with all outgoing transactions.
+The maximum number of unique WIDs on a platform is _NWorlds_. Increasing
+NWorlds increases the hardware cost, and in practice, 2-8 WIDs (requiring 1-3
+bits to represent) are sufficient for many use cases.
 
-Hardware agents (harts and devices) that can initiate transactions on
-physical addresses may support multiple contexts, with each context
-potentially being in a different world.  A software context running on
-a hart agent is present in one world at a time.  A hardware context on
-a device agent is present in one world at a time.
+Hardware agents (harts and devices) that can initiate transactions on physical
+addresses may support multiple contexts, with each context potentially being in
+a different world. As the WID to associate with outgoing transactions is
+typically determined by a control register, a given (software or hardware)
+context can only be present in one world at a time.
 
-Resources are identified by system physical addresses.  A world may be
-granted read, write, or both, access permissions on a physical
-address.  A resource can optionally be shared between worlds, with
-independent access permissions for each world.
+Resources are identified by system physical addresses. A world may be granted
+some combination of access permissions on a physical
+address, meaning that emitted transactions will be examined by a WID-aware
+interface somewhere along the transaction path to enforce such permission
+checking. It is possible for a resource to be accessible via more than one WID,
+allowing for resource-sharing across worlds.
 
-The _RISC-V Worlds_ is designed for the case where the allocation of
+_RISC-V Worlds_ is designed for the case where the allocation of
 agent contexts and resources to worlds is performed before or at
 reset/boot time, and not changed dynamically when the system is running
 unless there is a system reset.  Efficiently changing worlds allocation
 configurations dynamically while the system is running is not a goal of
 the current specification.
 
-When an agent context initiates a transaction to a physical address,
-hardware tags the transaction with the WID of the agent context.  The
-transaction is only allowed to complete successfully if the targeted
-resource has the appropriate access permissions (read or write)
-on that address for the WID on the transaction.  The permission checks
-might be performed at the agent, at the resource, or anywhere along the
-path the transaction takes through the platform’s bus hierarchy.  The bus
-transaction carries the WID through the interconnect and all elements
-on the path toward the targeted resource until access permissions can
-be checked.  The method of propagating and checking the WID on busses
+The method of propagating and checking the WID on busses
 is platform-specific, with different bus fabrics supporting WIDs in
-bus-specific ways. Similarly, any cache on the path that may need to
-allocate data into cache lines must consider the WID of the original
-transaction. The method of propagating and using the WID through caches is
-platform-specific, as well as the cache policy.
+bus-specific ways. The manner in which rejected transactions are reported
+is also platform-specific.
 
 NOTE: Theoretically all permissions checks on transactions could be
 performed at the source agent to prevent any illegal transactions from
@@ -63,20 +53,14 @@ expensive, particularly when permissions are configurable, and so it is
 assumed that permissions checking is distributed out in the bus fabric and
 attached resources.
 
-If the permission check fails, the transaction is terminated or
-modified to avoid violating world isolation and the failure may be
-reported. Failures may be reported in a number of ways depending on
-the platform, the agent, the resource, and the transaction type.
-Failures may be reported to the initiating agent, and optionally one
-or more other agents. In some cases, the failure cannot be directly
-reported to the initiating agent and the transaction is modified to be
-ignored or to return benign data.  In these cases, the failure may
-still be reported to a different agent through an alternate mechanism.
+Any cache on the path that may need to allocate data into cache lines must
+consider the WID of the original transaction. The method of propagating and
+using the WID through caches is platform-specific, as well as the cache policy.
 
 === RISC-V ISA World-ID Extensions
 
 RISC-V harts that support Worlds associate a WID with all memory
-accesses initiated by that hart.  The World-ID extensions allow
+accesses initiated by that hart. The World-ID extensions allow
 different privilege modes on a hart to be tagged with different WIDs.
 
 There are the following levels of Worlds support on RISC-V harts.
