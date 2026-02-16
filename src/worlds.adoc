@@ -72,6 +72,9 @@ There are the following levels of Worlds support on RISC-V harts.
 * With the *Smwid* extension, the `mwid` CSR is introduced to provide a
   lockable control of the WID value assigned to the hart. A platform-defined
   value, `pmwidlist`, may limit the set of WIDs that can be used with `mwid`.
+** If *Smwid* is enabled, the platform determines whether `mwid` is locked or
+   unlocked out of reset.
+** It is platform-specific whether (or not) `mwid` changes between resets.
 * The *Smlwid* extension introduces the `mlwid` CSR to control the WID of
   lower-privilege modes. A platform-defined value, `pmlwidlist`, may limit the
   set of WIDs that can be used with `mlwid`.
@@ -79,10 +82,9 @@ There are the following levels of Worlds support on RISC-V harts.
   introduces the `mlwidlist` CSR to allow M-mode to restrict the set of WIDs
   that may be used with `mlwid`. The `mlwidlist` CSR is locked (read-only)
   whenever `mwid` is locked.
-* Next comes the *Smwdeleg* extension, which further enable
-  M-mode to delegate to S-mode the ability to assign the WID of S-mode lower-
-  privilege modes (i.e., U-mode), thereby adding the *Sswid* extension to S-mode
-  with the `slwid` CSR.
+* The *Smwdeleg* extension, which further enables M-mode to delegate to S-mode
+  the ability to assign the WID of U-mode, thereby adding the *Sswid* extension
+  to S-mode with the `slwid` CSR.
 
 All accesses, including implicit memory references such as instruction
 fetches and page-table walks, must be tagged with the appropriate WID.
@@ -97,13 +99,6 @@ way, early-boot M-mode firmware (that is, code executing before the
 M-mode-constraining registers are locked) is considered to be more privileged
 than regular M-mode (after the constraints are locked), and in this way it
 still respects the spirit of the aforementioned rule.
-
-The only extension that is dependent on *Smwid* is *Smlwidlist*, the other
-Worlds extensions have no dependence on *Smwid*.  If the *Smwid* extension is
-not enabled, the `mwid` CSR does not exist.  If *Smwid* is enabled, the
-platform determines whether `mwid` is locked or unlocked on-reset.
-
-NOTE: It is platform-specific whether or not `mwid` changes between resets.
 
 NOTE: Different harts in a system may have different WIDs in M-mode.
 
