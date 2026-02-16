@@ -142,17 +142,18 @@ image::drawio/world_none.svg[WorldNone,align="center"]
 
 === One world per hart with the Smwid extension
 
-This extension introduces the lockable `mwid` CSR. This CSR provides a view of
-the WID value for all outgoing transactions and includes a sticky lock-bit to
-determine its mutability. The lock bit (`L`) is at offset `XLEN-1` within the CSR.
-The WID field occupies the Ceil(Log~2~NWorlds)-1:0 writable bits.
+The Smwid extension introduces the lockable `mwid` CSR. This CSR provides a
+view of the WID value for all outgoing transactions and includes a sticky
+lock-bit to determine its mutability. The lock bit (`L`) is at offset `XLEN-1`
+within the CSR. The WID field occupies the least-significant
+Ceil(Log~2~NWorlds) bits of the CSR.
 
 The lock bit is sticky, meaning that once set it cannot be unset until the
 hart is reset.  Once the `mwid` CSR is locked (by setting `L` to 1), any attempt
 to write to the CSR is ignored. The CSR becomes read-only.
 
 On-reset, the `mwid` CSR is expected to show the platform-defined `pmwid` value.
-The `mwid` CSR may be locked immediately out of reset, or the platform may
+The `mwid` CSR may already be locked immediately out of reset, or the platform may
 leave it unlocked in the case that early-boot M-mode code is responsible for
 setting the WID (and locking it, presumably).
 
@@ -160,8 +161,8 @@ The platform may limit the set of WIDs that may be used with `mwid` via a
 non-ISA `pmwidlist` mask. `pmwid` must be included in `pmwidlist`.
 Assigning a WID value to `mwid` that is not enabled by that  `pmwidlist` mask
 will result in the hart's transactions being trapped. This will
-result in a complete hang of the hart (it will be unable to fetch
-instructions), but that is the appropriate outcome if M-mode attempts to
+result in a complete hang of the hart (as it will be unable to fetch
+instructions), which is the appropriate outcome if M-mode attempts to
 contravene platform-imposed constraints.
 
 .One world with the Smwid extension
