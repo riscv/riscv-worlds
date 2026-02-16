@@ -104,38 +104,25 @@ NOTE: Different harts in a system may have different WIDs in M-mode.
 
 === RISC-V Worlds CSRs
 
-The RISC-V Worlds Smlwid, Smwdeleg, and Sswid extensions allow a hart to
-assign WIDs to its privilege modes and masks to control the values that
-are authorized for use with the principle that no privilege mode can change
-its own WID.  The CSRs for these extensions are listed in the Table below.
+The CSRs for the RISC-V Worlds extensions are listed in the following table.
 
 [cols="1,1,^1,^1,5"]
 .World-ID CSRs
 |===
 |Size in bits|Register|Access|Proposed CSR Address|Description
-| `XLEN` | `mlwid` | WARL for M | `0x390` | WID used for lower privilege modes.
-`Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
-| `XLEN` | `mwiddeleg` | WARL for M | `0x748` | Set of WID
-values delegated to S-mode, represented as a bit vector. `NWorlds` LSBs
-are used, others are zero.
-| `XLEN` | `slwid` | WARL for S | `0x190` | WID value used in lower modes
-(i.e., U-mode). `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
-|===
-
-The RISC-V Worlds adds additional extensions Smwid and Smlwidlist to allow a
-hart to observe and modify the WID assigned to M-mode as well as the set of
-WIDs that are delegated to lower privilege modes.
-
-[cols="1,1,^1,^1,5"]
-.Optional World-ID CSRs
-|===
-|Size in bits|Register|Access|Proposed CSR Address|Description
 | `XLEN` | `mwid` | WARL for M | ??? | WID used for M-mode with the optional
 Smwid extension.  `Ceil(Log~2~NWorlds)` LSBs are used, others are zero except
 for the lock bit at offset `XLEN-1`.
+| `XLEN` | `mlwid` | WARL for M | `0x390` | WID used for lower-than-M privilege
+levels. `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
 | `XLEN` | `mlwidlist` | WARL for M | ??? | Set of WID values delegated to
 M-mode, represented as a bit vector.  `NWorlds` LSBs are used,
 others are zero. Register is locked (read-only) whenever `mwid` is locked.
+| `XLEN` | `mwiddeleg` | WARL for M | `0x748` | Set of WID
+values delegated to S-mode, represented as a bit vector. `NWorlds` LSBs
+are used, others are zero.
+| `XLEN` | `slwid` | WARL for S | `0x190` | WID value used in lower-than-S
+privilege levels. `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
 |===
 
 All RISC-V Worlds extensions support NWorlds {le} `XLEN`.
