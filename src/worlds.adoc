@@ -255,12 +255,12 @@ between the written value and the platform mask.
 
 The Smwdeleg extension requires the Smlwid extension and allows M-mode to
 delegate to S-mode the ability to allocate WIDs to privilege modes
-lower than S.  The Smwdeleg extension optionally enables the Sswid extension
+lower than S. The Smwdeleg extension optionally enables the Sswid extension
 for S-mode.
 
 NOTE: these extensions are not dependent on Smwid nor Smlwidlist.
 
-The Smwdeleg extension adds the `mwiddeleg` M-mode read-write CSR.  The
+The Smwdeleg extension adds the `mwiddeleg` M-mode read-write CSR. The
 `mwiddeleg` register represents a set of WIDs as a bit vector with
 WID _i_ represented by bit _i_ of the register.  The `mwiddeleg` CSR
 is a WARL register where each bit that can be set indicates a WID that
@@ -280,13 +280,13 @@ in `mwiddeleg` also.
 If `mwiddeleg` is zero (which may happen even if non-zero values are written to
 it, see the previous paragraph), the Sswid extension is disabled, in which case
 any accesses to the `slwid` CSR raise an illegal instruction exception.
-Otherwise, if `mwiddeleg` is non-zero, the Sswid extension is enabled.  Like
+Otherwise, if `mwiddeleg` is non-zero, the Sswid extension is enabled. Like
 any other WARL register, M-mode software is expected to read back the register
 to determine the actual configuration retained by the implementation.
 
-The Sswid extension adds the S-mode read-write `slwid` CSR, which
+The *Sswid* extension adds the S-mode read-write `slwid` CSR, which
 sets the WID used for modes lower than S-mode.  The `slwid` field is WARL
-that can contain Ceil(Log~2~NWorlds)-1:0 writable bits.
+with the WID encoded in the Ceil(Log~2~NWorlds) least-significant bits.
 
 If an unauthorized WID (per the `mwiddeleg` list) is written to `slwid`, then
 the first attempt to fetch an instruction by U-mode will take a precise
@@ -312,24 +312,26 @@ NOTE: The Sswid extension is not available to a guest OS.
 
 There is no requirement for `mwiddeleg` to contain the WID in `mlwid`,
 i.e., S-mode can be set to a different world than the ones it is
-allowed to assign to U-mode using `slwid` when Sswid is enabled.
+allowed to assign to U-mode through `slwid` (when Sswid is enabled).
 
-At reset, `mwiddeleg` is set to zero and hence Sswid is disabled.
+On reset, `mwiddeleg` is zero and hence Sswid is disabled.
 
 === Response to permission violations
 
-When a hart attempts an explicit or implicit memory access that fails
-a World permissions check, the access may or may not raise an
-access-fault exception of the appropriate type (i.e.,
-instruction-access fault, load-access fault, or store/AMO-access
-fault).  When an access-fault exception cannot be raised, the
-instruction performing the memory access can be retired but any writes
-to the protected physical memory location are ignored and any memory
-reads return data independent of the value in the protected physical
-memory location to avoid violating memory isolation.
+When a hart attempts an explicit or implicit memory access that fails a World
+permissions check, the access may or may not raise an access-fault exception of
+the appropriate type (instruction-access fault, load-access fault, or
+store/AMO-access fault). The ability to raise an appropriate exception will be
+determined by where the permission-checking is being performed along the
+transaction's path (in the hart itself, at the transaction's target, or
+somewhere in between). When an access-fault exception cannot be raised, the
+instruction performing the memory access can be retired but any writes to the
+protected physical memory location are ignored and any memory reads return data
+independent of the value in the protected physical memory location to avoid
+violating memory isolation.
 
 NOTE: Secure systems will typically ensure that some agent is notified
-when an illegal access is attempted, even when an access-fault
+when an illegal access is rejected, even when an access-fault
 exception cannot be raised on the hart context.
 
 NOTE: We cannot require that reads that fail permissions checks but
