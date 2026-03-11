@@ -89,16 +89,24 @@ There are the following levels of Worlds support on RISC-V harts.
   lockable control of the WID value assigned to the hart. A platform-defined
   value, `pmwidlist`, may limit the set of WIDs that can be used with `mwid`.
 * The *Smlwid* extension introduces the `mlwid` CSR to control the WID of
-  lower-privilege modes. A platform-defined value, `pmlwidlist`, may limit the
-  set of WIDs that can be used with `mlwid`.
-* The *Smlwidlist* extension depends on the *Smwid* and *Smlwid* extensions, it
-  introduces the `mlwidlist` CSR to allow M-mode to restrict the set of WIDs
-  that may be used with `mlwid`. The `mlwidlist` CSR is locked (read-only)
-  whenever `mwid` is locked.
-* Next comes the *Smwdeleg* extension, which further enable
-  M-mode to delegate to S-mode the ability to assign the WID of S-mode lower-
-  privilege modes (i.e., U-mode), thereby adding the *Sswid* extension to S-mode
-  with the `slwid` CSR.
+  lower-privilege modes.
+* The *Smlwidlist* extension depends on the *Smwid* extension and introduces
+  the `mlwidlist` CSR to allow M-mode to restrict the set of WIDs that may be
+  used with `mlwid`. The `mlwidlist` CSR is locked (read-only) whenever `mwid`
+  is locked.
+* Next comes the *Smwdeleg* extension, which further enables
+  M-mode to delegate to lower-privilege modes the ability to assign the WID of
+  next lower-privilege modes. Without the H extension, this means S-mode may set
+  the WID to be used by U-mode. This is defined by the *Sswid* extension to S-mode
+  with the `slwid` CSR. With the H extension, this means HS-mode may set the WID for
+  VS-mode and lower.
+* The *Shlwid/Shwdeleg* extensions add another delegation level to match the additional
+  level of privilege hierarchy that the H extension introduces. Two HS-mode
+  registers (that are not visible to VS) are added, called `hlwid` and `hwiddeleg`.
+  *Shwdeleg* also adds a VS replica CSR called `vslwid` which is accessed from HS-mode
+  as well as via the `slwid` CSR in VS-mode (see
+   <<hypervisor.adoc#_hypervisor_and_virtual_supervisor_csrs, VS CSRs in the Hypervisor
+   chapter>>).
 
 All accesses, including implicit memory references such as instruction
 fetches and page-table walks, must be tagged with the appropriate WID.
@@ -125,22 +133,35 @@ NOTE: Different harts in a system may have different WIDs in M-mode.
 
 === RISC-V Worlds CSRs
 
-The RISC-V Worlds Smlwid, Smwdeleg, and Sswid extensions allow a hart to
-assign WIDs to its privilege modes and masks to control the values that
-are authorized for use with the principle that no privilege mode can change
-its own WID.  The CSRs for these extensions are listed in the Table below.
+The RISC-V Worlds Smlwid, Smwdeleg, Sswid, Shwdeleg and Shlwid extensions
+allow a hart to assign WIDs to its privilege modes and masks to control the
+values that are authorized for use with the principle that no privilege mode
+can change its own WID. The CSRs for these extensions are listed in the Table
+below.
 
 [cols="1,1,^1,^1,5"]
 .World-ID CSRs
 |===
 |Size in bits|Register|Access|Proposed CSR Address|Description
-| `XLEN` | `mlwid` | WARL for M | `0x390` | WID used for lower privilege modes.
+| `XLEN` | `mlwid` | WARL for M | `0x390` | WID used for lower privilege modes
+ than M-mode.
 `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
 | `XLEN` | `mwiddeleg` | WARL for M | `0x748` | Set of WID
-values delegated to S-mode, represented as a bit vector. `NWorlds` LSBs
-are used, others are zero.
-| `XLEN` | `slwid` | WARL for S | `0x190` | WID value used in lower modes
-(i.e., U-mode). `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
+values delegated to (H)S-mode, represented as a bit vector. `NWorlds` LSBs are used,
+others are zero.
+| `XLEN` | `slwid` | WARL for S, HS | `0x190` | WID value used in lower privilege
+modes than S-mode (i.e., U-mode). `Ceil(Log~2~NWorlds)` LSBs are used,
+others are zero.
+| `XLEN` | `hwiddeleg` | WARL for HS | `???` | Set of WID
+values delegated to VS-mode, represented as
+a bit vector. `NWorlds` LSBs are used, others are zero.
+| `XLEN` | `hlwid` | WARL for HS | `???` | WID value used for lower privilege
+modes than HS-mode (i.e., VS/VU/U-mode).
+ `Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
+| `XLEN` | `vslwid` | WARL for HS | `???` | this CSR is the VS replica register of
+`slwid`. In HS-mode this register can be programmed to set the effective WID of
+VU mode. In VS-mode accesses to `slwid` use the `vslwid` contents.
+`Ceil(Log~2~NWorlds)` LSBs are used, others are zero.
 |===
 
 The RISC-V Worlds adds additional extensions Smwid and Smlwidlist to allow a
@@ -298,9 +319,9 @@ NOTE: these extensions are not dependent on Smwid nor Smlwidlist.
 
 The Smwdeleg extension adds the `mwiddeleg` M-mode read-write CSR.  The
 `mwiddeleg` register represents a set of WIDs as a bit vector with
-WID _i_ represented by bit _i_ of the register.  The `mwiddeleg` CSR
+WID _i_ represented by bit _i_ of the register. The `mwiddeleg` CSR
 is a WARL register where each bit that can be set indicates a WID that
-is delegated to S-mode.  The set of worlds that can be delegated to
+is delegated to S-mode. The set of worlds that can be delegated to
 S-mode on a hart is platform-specific.
 
 NOTE: Different harts on a platform can have different sets of
@@ -314,11 +335,14 @@ any WIDs that are de-authorized (set to zero) will be implicitly de-authorized
 in `mwiddeleg` also.
 
 If `mwiddeleg` is zero (which may happen even if non-zero values are written to
-it, see the previous paragraph), the Sswid extension is disabled, in which case
-any accesses to the `slwid` CSR raise an illegal instruction exception.
-Otherwise, if `mwiddeleg` is non-zero, the Sswid extension is enabled.  Like
-any other WARL register, M-mode software is expected to read back the register
-to determine the actual configuration retained by the implementation.
+it, see the previous paragraph), the applicable lower privilege level extensions
+(Shwiddeleg, Shlwid, Sswid) are disabled. So any accesses to the `slwid` CSR
+raises an illegal instruction exception as well as accesses to `hwiddeleg`
+and `hlwid` (if supported).
+Otherwise, if `mwiddeleg` is non-zero, the Sswid extension is enabled and optional
+Shwiddeleg/Shlwid may be enabled. Like any other WARL register, M-mode software
+is expected to read back the register to determine the actual configuration
+retained by the implementation.
 
 The Sswid extension adds the S-mode read-write `slwid` CSR, which
 sets the WID used for modes lower than S-mode.  The `slwid` field is WARL
@@ -332,7 +356,7 @@ the same `mwiddeleg` authorization check, meaning that it may also take a
 precise exception (indicating the software-check cause).
 
 When this exception is raised, the `mtval` register is set to "illegal world
-fault (code=4)".  The software-check exception caused by Sswid has higher
+fault (code=4)". The software-check exception caused by Sswid has higher
 priority than any access-fault exception (See <<exception-priority>> of 
 Privileged Specification) and leads to a trap being delivered to M-mode.
 
@@ -344,13 +368,71 @@ address-translation caches must ensure that translations are cached
 separately for each WID.  A simple implementation can flush
 address-translation caches on any write to `mwiddeleg` or `slwid`.
 
-NOTE: The Sswid extension is not available to a guest OS.
-
 There is no requirement for `mwiddeleg` to contain the WID in `mlwid`,
 i.e., S-mode can be set to a different world than the ones it is
 allowed to assign to U-mode using `slwid` when Sswid is enabled.
 
-At reset, `mwiddeleg` is set to zero and hence Sswid is disabled.
+At reset, `mwiddeleg` is set to zero and hence Sswid (and Shwdeleg/Shlwid)
+are disabled.
+
+=== Shlwid / Shwdeleg extensions
+
+The Shlwid extension adds the HS-mode read-write `hlwid` CSR, which
+sets the WID used for VS-mode and if not further delegated for VU-mode. The `hlwid`
+field is WARL that can contain Ceil(Log~2~NWorlds)-1:0 writable bits.
+
+If an unauthorized WID (per the `mwiddeleg` list) is written to `hlwid`, then
+the first attempt to fetch an instruction by VS-mode (or VU-mode if VS delegation
+is disabled) will take a precise exception indicating the software-check cause.
+Similarly, any attempt by HS-mode or U-mode to perform a hypervisor load or store
+"as VS/VU-mode" will be subject to the same `hwiddeleg` authorization check, meaning
+that it may also take a precise exception (indicating the software-check cause).
+
+When this exception is raised, the `mtval` register is set to "illegal world
+fault (code=4)". The software-check exception caused by Shlwid has higher
+priority than any access-fault exception (See <<exception-priority>> of 
+Privileged Specification) and leads to a trap being delivered to M-mode.
+
+.Shwdeleg/Shlwid extensions: Support for HS-mode to control the lower privilege mode's world.
+image::drawio/Shwdeleg_Shlwid.svg[Shwdeleg_Shlwid,align="center"]
+
+The Shwdeleg extension requires the Smwdeleg/Shlwid/Sswid extensions and allows
+HS-mode to delegate to VS-mode the ability to allocate WIDs to VU-mode.
+To allow for a hypervisor to set or context switch the VS-mode `slwid` CSR, 
+the `vslwid` replica CSR is defined as part of the Shwdeleg extension (see
+   <<hypervisor.adoc#_hypervisor_and_virtual_supervisor_csrs, VS CSRs in the Hypervisor
+   chapter>>).
+In HS-mode this register can be programmed to set the effective WID of VU mode.
+In VS-mode it takes over all functions of the `slwid` CSR.
+
+The Shwdeleg extension adds the `hwiddeleg` HS-mode read-write CSR. The
+`hwiddeleg` register represents a set of WIDs as a bit vector with
+WID _i_ represented by bit _i_ of the register.  The `hwiddeleg` CSR
+is a WARL register where each bit that can be set indicates a WID that
+is delegated to VS-mode. The set of worlds that can be delegated to
+VS-mode on a hart is platform-specific.
+
+NOTE: The `hwiddeleg` not only constraints `vslwid`, but as it is a virtualization
+replica that takes over the function of `slwid` when V=1, it also defines the
+authorized WIDs for the virtualized `slwid`. If an unauthorized WID is written
+to `slwid` in VS-mode, also then the first attempt to fetch an instruction by
+VU-mode will take a precise exception indicating the software-check cause.
+
+`hwiddeleg` is always a subset of `mwiddeleg`. Attempts to authorize a WID in
+`mwiddeleg` that is not authorized in `mwiddeleg` will fail - the
+WARL behavior will mask off any such bits. Similarly, if `mwiddeleg` is updated
+(either explicit or implicit), any WIDs that are de-authorized (set to zero)
+will be implicitly de-authorized in `hwiddeleg` also.
+
+If `hwiddeleg` is zero, the `vslwid` CSR is disabled, in which case
+any accesses to the `vslwid` CSR (direct from HS-mode, or indirect from the VS-mode
+`slwid` replica) raise an illegal instruction exception.
+Otherwise, if `hwiddeleg` is non-zero, the `vslwid` CSR is enabled. Like
+any other WARL register, HS-mode software is expected to read back the register
+to determine the actual configuration retained by the implementation.
+
+At reset, `hwiddeleg` is set to zero and hence `vslwid` is disabled.
+
 
 === Response to permission violations
 

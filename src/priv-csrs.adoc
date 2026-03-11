@@ -415,7 +415,7 @@ Upper 32 bits of `stimecmp`, RV32 only.
 |`0x190`
 |SRW
 |`slwid`
-| Supervisor WID value for lower privilege modes (i.e., U-mode) Register.
+| Supervisor WID value for lower privilege modes Register.
 |===
 
 <<<
@@ -543,8 +543,17 @@ Upper 32 bits of `htimedelta`, RV32 only.
  Upper 32 bits of Hypervisor State Enable 2 Register, RV32 only. +
  Upper 32 bits of Hypervisor State Enable 3 Register, RV32 only.
 
-4+^|Virtual Supervisor Registers
+4+^|Hypervisor Worlds Registers
+|`???` +
+ `???` 
+|HRW +
+ HRW
+|`hwiddeleg`  +
+ `hlwid`
+|Hypervisor WID values delegated to VS mode Register. +
+ Hypervisor WID value for lower privilege modes Register. 
 
+4+^|Virtual Supervisor Registers
 |`0x200` +
 `0x204` +
 `0x205` +
@@ -553,7 +562,8 @@ Upper 32 bits of `htimedelta`, RV32 only.
 `0x242` +
 `0x243` +
 `0x244` +
-`0x280`
+`0x280` +
+`???`
 |HRW +
 HRW +
 HRW +
@@ -562,7 +572,8 @@ HRW +
 HRW +
 HRW +
 HRW +
-HRW
+HRW +
+HRW 
 |`vsstatus` +
 `vsie` +
 `vstvec` +
@@ -571,7 +582,8 @@ HRW
 `vscause` +
 `vstval` +
 `vsip` +
-`vsatp`
+`vsatp` +
+`vslwid` 
 |Virtual supervisor status register. +
 Virtual supervisor interrupt-enable register. +
 Virtual supervisor trap handler base address. +
@@ -580,7 +592,8 @@ Virtual supervisor exception program counter. +
 Virtual supervisor trap cause. +
 Virtual supervisor trap value. +
 Virtual supervisor interrupt pending. +
-Virtual supervisor address translation and protection.
+Virtual supervisor address translation and protection. +
+Virtual supervisor WID value for lower privilege modes Register.
 
 4+^|Virtual Supervisor Indirect
 
@@ -928,7 +941,7 @@ Resumable NMI status.
 MRW
 |`mwiddeleg` +
 `mlwidlist`
-| Machine WID values delegated to S mode Register. +
+| Machine WID values delegated to (H)S mode Register. +
 Machine WID values delegated to M mode Register.
 
 4+^|Machine Counter/Timers
