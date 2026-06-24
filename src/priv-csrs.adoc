@@ -885,7 +885,7 @@ Physical memory protection address register.
 
 4+^|Machine Worlds Registers
 |`0x390` +
-
+`0x391`
 |MRW +
 MRW
 |`mlwid` +
@@ -923,7 +923,7 @@ Resumable NMI status.
 
 4+^|Machine Worlds Registers
 |`0x748` +
-
+`0x749`
 |MRW +
 MRW
 |`mwiddeleg` +
