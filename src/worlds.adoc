@@ -53,9 +53,10 @@ expensive, particularly when permissions are configurable, and so it is
 assumed that permissions checking is distributed out in the bus fabric and
 attached resources.
 
-Any cache on the path that may need to allocate data into cache lines must
-consider the WID of the original transaction. The method of propagating and
-using the WID through caches is platform-specific, as well as the cache policy.
+Any cache on the path that may allocate data into cache lines must
+track the WID of the original transaction.  How the WID is stored (e.g., as
+part of the cache tag), whether cache lines are shared across worlds or
+isolated per world, and the cache replacement policy are all platform-specific.
 
 === RISC-V ISA World-ID Extensions
 
@@ -79,9 +80,9 @@ There are the following levels of Worlds support on RISC-V harts.
   lower-privilege modes. A platform-defined value, `pmlwidlist`, may limit the
   set of WIDs that can be used with `mlwid`.
 * The *Smlwidlist* extension depends on the *Smwid* and *Smlwid* extensions, it
-  introduces the `mlwidlist` CSR to allow M-mode to restrict the set of WIDs
-  that may be used with `mlwid`. The `mlwidlist` CSR is locked (read-only)
-  whenever `mwid` is locked.
+  introduces the `mlwidlist` CSR, where WID _i_ is represented by bit _i_ of the
+  register, to allow M-mode to restrict the set of WIDs that may be used with
+  `mlwid`. The `mlwidlist` CSR is locked (read-only) whenever `mwid` is locked.
 * The *Smwiddeleg* extension, which further enables M-mode to delegate to S-mode
   the ability to assign the WID of U-mode, thereby adding the *Sswid* extension
   to S-mode with the `slwid` CSR.
