@@ -154,7 +154,8 @@ The Smwid extension introduces the lockable `mwid` CSR. This CSR provides a
 view of the WID value for all outgoing transactions and includes a sticky
 lock-bit to determine its mutability. The lock bit (`L`) is at offset `MXLEN-1`
 within the CSR. The WID field is WARL and occupies the least-significant
-Ceil(Log~2~NWorlds) bits of the CSR. The register is formatted as shown in <<MWID64>> when MXLEN=64 and <<MWID32>> when MXLEN=32.
+Ceil(Log~2~NWorlds) bits of the CSR. The register is formatted as shown in
+<<MWID64>> when MXLEN=64 and <<MWID32>> when MXLEN=32.
 
 [[MWID64]]
 .Machine WID value for M-privilege mode Register (`mwid`) for MXLEN=64
@@ -192,7 +193,7 @@ setting the WID (and locking it, presumably).
 The platform may limit the set of WIDs that may be used with `mwid` via a
 non-ISA `pmwidlist` mask. `pmwid` must be included in `pmwidlist`.
 Assigning a WID value to `mwid` that is not enabled by that `pmwidlist` mask
-will result in the hart taking an exception. This will
+will result in the hart raising an exception. This will
 result in a complete hang of the hart (as it will be unable to fetch
 instructions), which is the appropriate outcome if M-mode attempts to
 contravene platform-imposed constraints.
@@ -224,7 +225,7 @@ with WID _i_ represented by bit _i_ of the register. Each bit indicates whether
 the corresponding WID is authorized for use with `mlwid`.
 
 NOTE: There is no HW discovery mechanism for M-mode software to discover the
-available worlds and their permissions (besides taking exceptions). Information
+available worlds and their permissions (besides raising exceptions). Information
 about worlds and resource assignment must be conveyed by software mechanisms.
 The platform software will have predetermined allocations for the worlds on a
 platform and all required information needed by M-mode software must be
@@ -232,12 +233,12 @@ provided out-of-band.
 
 If an unauthorized WID is written to `mlwid`, meaning that the WID value is not
 enabled in the platform's `pmlwidlist` mask, then the lower-privilege mode's
-first attempt to fetch an instruction will take a precise exception.  This
+first attempt to fetch an instruction will raise a precise exception.  This
 exception will indicate the "software-check" cause.
 Similarly, after an MPRV update in `mstatus` to
 modify the effective privilege mode for loads and stores executed in M-mode
 (for them to take effect as S or U mode accesses), then the first such load or
-store will take a precise software-check exception if `mlwid` is not
+store will raise a precise software-check exception if `mlwid` is not
 authorized.
 
 When this exception is raised, the `mtval` register is set to "illegal world
@@ -321,10 +322,10 @@ sets the WID used for modes lower than S-mode.  The `slwid` field is WARL
 with the WID encoded in the Ceil(Log~2~NWorlds) least-significant bits.
 
 If an unauthorized WID (per the `mwiddeleg` list) is written to `slwid`, then
-the first attempt to fetch an instruction by U-mode will take a precise
+the first attempt to fetch an instruction by U-mode will raise a precise
 exception indicating the software-check cause.  Similarly, after a MPRV update,
 any attempt by M-mode to perform a load or store "as U-mode" will be subject to
-the same `mwiddeleg` authorization check, meaning that it may also take a
+the same `mwiddeleg` authorization check, meaning that it may also raise a
 precise exception (indicating the software-check cause).
 
 When this exception is raised, the `mtval` register is set to "illegal world
