@@ -884,14 +884,10 @@ Physical memory protection address register.
  Upper 32 bits of Machine State Enable 3 Register, RV32 only.
 
 4+^|Machine Worlds Registers
-|`0x390` +
-`0x391`
-|MRW +
-MRW
-|`mlwid` +
-`mwid`
-|Machine WID value for lower privilege modes Register. +
-Machine WID value for M-privilege mode Register.
+|`0x390`
+|MRW
+|`mlwid`
+|Machine WID value for lower privilege modes Register.
 
 |===
 
@@ -923,12 +919,16 @@ Resumable NMI status.
 
 4+^|Machine Worlds Registers
 |`0x748` +
-`0x749`
+`0x749` +
+`0x74A`
 |MRW +
+MRW +
 MRW
 |`mwiddeleg` +
+`mwid` +
 `mlwidlist`
 | Machine WID values delegated to S mode Register. +
+Machine WID value for M-privilege mode Register. +
 Machine WID values delegated to M mode Register.
 
 4+^|Machine Counter/Timers

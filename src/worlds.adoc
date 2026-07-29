@@ -112,14 +112,14 @@ The CSRs for the RISC-V Worlds extensions are listed in the following table.
 .World-ID CSRs
 |===
 |Size in bits|Register|Access|Proposed CSR Address|Description
-| `MXLEN` | `mwid` | M | `0x391` | WID used for M-mode with the optional
+| `MXLEN` | `mwid` | M | `0x749` | WID used for M-mode with the optional
 Smwid extension. +
 `Ceil(Log~2~NWorlds)` LSBs are used, other bits are reserved (read-only zeros)
 except for the lock bit at offset `XLEN-1`.
 | `MXLEN` | `mlwid` | M | `0x390` | WID used for lower-than-M privilege
 levels. +
 `Ceil(Log~2~NWorlds)` LSBs are used, other bits are reserved (read-only zeros).
-| `MXLEN` | `mlwidlist` | M | `0x749` | Set of WID values delegated to
+| `MXLEN` | `mlwidlist` | M | `0x74A` | Set of WID values delegated to
 M-mode, represented as a bit vector. +
 `NWorlds` LSBs are used, other bits are reserved (read-only zeros). +
 Register is locked (read-only) whenever `mwid` is locked.
