@@ -154,8 +154,12 @@ The Smwid extension introduces the lockable `mwid` CSR. This CSR provides a
 view of the WID value for all outgoing transactions and includes a sticky
 lock-bit to determine its mutability. The lock bit (`L`) is at offset `MXLEN-1`
 within the CSR. The WID field is WARL and occupies the least-significant
-Ceil(Log~2~NWorlds) bits of the CSR. The register is formatted as shown in
-<<MWID64>> when MXLEN=64 and <<MWID32>> when MXLEN=32.
+Ceil(Log~2~NWorlds) bits of the CSR. The remaining bits are non-zero reserved (NZR).
+SW should write 0 to get the behavior described in this spec, while future
+extensions might define non-zero values as causing some different behavior.
+As non-zero values are reserved, SW cannot rely on their behavior, so expectation
+is that implementations make them read-only zero. The register is formatted as
+shown in <<MWID64>> when MXLEN=64 and <<MWID32>> when MXLEN=32.
 
 [[MWID64]]
 .Machine WID value for M-privilege mode Register (`mwid`) for MXLEN=64
@@ -164,7 +168,7 @@ Ceil(Log~2~NWorlds) bits of the CSR. The register is formatted as shown in
 ....
 {reg: [
   {bits: 6, name: 'WID'},
-  {bits: 57, name: 'WPRI'},
+  {bits: 57, name: 'NZR'},
   {bits: 1, name: 'L'},
 ], config:{lanes: 2, hspace:1024}}
 ....
@@ -176,7 +180,7 @@ Ceil(Log~2~NWorlds) bits of the CSR. The register is formatted as shown in
 ....
 {reg: [
   {bits: 5, name: 'WID'},
-  {bits: 26, name: 'WPRI'},
+  {bits: 26, name: 'NZR'},
   {bits: 1, name: 'L'},
 ], config:{lanes: 1, hspace:1024}}
 ....
