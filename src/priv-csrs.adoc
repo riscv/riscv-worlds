@@ -415,7 +415,7 @@ Upper 32 bits of `stimecmp`, RV32 only.
 |`0x190`
 |SRW
 |`slwid`
-| Supervisor WID value for lower privilege modes (i.e., U-mode) Register.
+| Supervisor WID value for lower privilege modes Register.
 |===
 
 <<<
@@ -543,6 +543,16 @@ Upper 32 bits of `htimedelta`, RV32 only.
  Upper 32 bits of Hypervisor State Enable 2 Register, RV32 only. +
  Upper 32 bits of Hypervisor State Enable 3 Register, RV32 only.
 
+4+^|Hypervisor Worlds Registers
+|`???` +
+ `???` 
+|HRW +
+ HRW
+|`hwiddeleg`  +
+ `hlwid`
+|Hypervisor WID values delegated to VS mode Register. +
+ Hypervisor WID value for lower privilege modes Register. 
+
 4+^|Virtual Supervisor Registers
 
 |`0x200` +
@@ -629,6 +639,13 @@ Upper 32 bits of `vstimecmp`, RV32 only.
 |HRW
 |`vsctrctl`
 |Virtual Supervisor Control Transfer Records Control Register.
+
+4+^|Virtual Supervisor Worlds Register 
+|`???`
+|HRW
+|`vslwid`
+|Virtual supervisor WID value for lower privilege modes Register.
+
 
 |===
 
@@ -927,7 +944,7 @@ MRW
 |`mwiddeleg` +
 `mwid` +
 `mlwidlist`
-| Machine WID values delegated to S mode Register. +
+| Machine WID values delegated to (H)S mode Register. +
 Machine WID value for M-privilege mode Register. +
 Machine WID values delegated to M mode Register.
 
